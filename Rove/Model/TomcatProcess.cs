@@ -12,7 +12,7 @@ namespace Rove.Model
         {
             get
             {
-                return Process.GetProcessesByName("java.exe")
+                return Process.GetProcessesByName("notepad")
                     .Select(p => new TomcatProcessInfo(p))
                     .ToList();
             }
@@ -20,12 +20,24 @@ namespace Rove.Model
 
         private Process Process { get; set; }
 
+        public int Id => Process.Id;
+
         private Lazy<string> CommandLine { get; }
 
         public TomcatProcessInfo(Process process)
         {
+            if (process == null)
+            {
+                throw new ArgumentNullException(nameof(process));
+            }
+
             Process = process;
             CommandLine = new Lazy<string>(() => string.Format("select CommandLine from Win32_Process where ProcessID ='{0}'", Process.Id));
+        }
+
+        public TomcatProcessControl Control()
+        {
+            return new TomcatProcessControl(Process);
         }
     }
 
@@ -35,7 +47,11 @@ namespace Rove.Model
 
         private IntPtr MainWindowHandle { get; }
 
-        private bool IsDisposed { get; set; } = false;
+        private bool IsDisposedInternal { get; set; } = false;
+
+        public bool IsDisposed => IsDisposedInternal || Process.HasExited;
+
+        public int Id { get; }
 
         public TomcatProcessControl(Process process)
         {
@@ -46,6 +62,26 @@ namespace Rove.Model
 
             Process = process;
             MainWindowHandle = process.MainWindowHandle;
+            Id = process.Id;
+            Hide();
+        }
+
+        public void Kill()
+        {
+            if (!IsDisposed)
+            {
+                Process.Kill();
+                IsDisposedInternal = true;
+            }
+        }
+
+        public void Show()
+        {
+            User32.ShowWindow(MainWindowHandle, User32.SW_SHOW);
+        }
+
+        public void Hide()
+        {
             User32.ShowWindow(MainWindowHandle, User32.SW_HIDE);
         }
 
@@ -53,9 +89,29 @@ namespace Rove.Model
         {
             if (!IsDisposed)
             {
-                User32.ShowWindow(MainWindowHandle, User32.SW_SHOW);
-                IsDisposed = true;
+                Show();
+                IsDisposedInternal = true;
             }
+        }
+
+        public override bool Equals(object obj)
+        {
+            return Equals(obj as TomcatProcessControl);
+        }
+        
+        public bool Equals(TomcatProcessControl other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            return Process.Id == other.Process.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return Process.Id;
         }
     }
 
