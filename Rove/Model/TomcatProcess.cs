@@ -61,9 +61,21 @@ namespace Rove.Model
             }
 
             Process = process;
-            MainWindowHandle = process.MainWindowHandle;
+            MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(process);
             Id = process.Id;
             Hide();
+        }
+
+        private IntPtr WaitForMainWindowHandleToBecomeAvailable(Process process)
+        {
+            IntPtr mainWindowHandle = process.MainWindowHandle;
+            DateTime start = DateTime.Now;
+            while (MainWindowHandle == IntPtr.Zero && DateTime.Now - start < TimeSpan.FromMilliseconds(200))
+            {
+                mainWindowHandle = process.MainWindowHandle;
+            }
+
+            return mainWindowHandle;
         }
 
         public void Kill()
