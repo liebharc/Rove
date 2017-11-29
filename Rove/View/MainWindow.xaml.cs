@@ -5,11 +5,32 @@ using System.Windows.Controls;
 using System.Windows.Threading;
 using System;
 using System.Collections.Generic;
+using Rove.Model;
+using System.IO;
 
 namespace Rove.View
 {
     public partial class MainWindow : Window
     {
+        private static void CreateDefaultConfigFile()
+        {
+            var defaultConfig = ConfigSerializer.ConfigToText(OverallConfigSerialize.DefaultConfig);
+            var file= typeof(MainWindow).Assembly.Location.Replace(".exe", "") + "Default.xml";
+            File.WriteAllText(file, defaultConfig);
+        }
+
+        private static OverallConfig LoadConfig()
+        {
+            var file = typeof(MainWindow).Assembly.Location.Replace(".exe", "") + ".xml";
+            if (!File.Exists(file))
+            {
+                return OverallConfigSerialize.DefaultConfig.ToOverallConfig();
+            }
+
+            var content = File.ReadAllText(file);
+            return ConfigSerializer.TextToConfig(content).ToOverallConfig();
+        }
+
         private DispatcherTimer Timer { get; } = new DispatcherTimer();
 
         private object TImerLock { get; } = new object();
@@ -19,6 +40,22 @@ namespace Rove.View
         public MainWindow()
         {
             InitializeComponent();
+            OverallConfig config;
+            try
+            {
+                CreateDefaultConfigFile();
+                config = LoadConfig();
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show("Error with configuration: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(0);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Environment.Exit(0);
+            }
             TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection();
             DataContext = viewModel;
             viewModel.Processes.CollectionChanged += Processes_CollectionChanged;
