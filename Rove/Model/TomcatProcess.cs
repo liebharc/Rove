@@ -43,13 +43,27 @@ namespace Rove.Model
 
     public sealed class TomcatProcessControl : IDisposable
     {
-        private Process Process { get; set; }
+        private Process WorkerProcess { get; set; }
+
+        private Process GuiProcess { get; set; }
 
         private IntPtr MainWindowHandle { get; }
 
         private bool IsDisposedInternal { get; set; } = false;
 
-        public bool IsDisposed => IsDisposedInternal || Process.HasExited;
+        public bool IsDisposed {
+            get
+            {
+                try
+                {
+                    return IsDisposedInternal || WorkerProcess.HasExited;
+                }
+                catch (Exception)
+                {
+                    return true;
+                }
+            }
+        }
 
         public int Id { get; }
 
@@ -63,16 +77,17 @@ namespace Rove.Model
             var parent = process.Parent();
             if (parent != null && parent.ProcessName == "cmd")
             {
-                Process = parent;
+                GuiProcess = parent;
             }
             else
             {
-                Process = process;
+                GuiProcess = process;
             }
             
-            MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(Process);
+            MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(GuiProcess);
 
-            Id = process.Id;
+            WorkerProcess = process;
+            Id = WorkerProcess.Id;
             Hide();
         }
 
@@ -92,7 +107,7 @@ namespace Rove.Model
         {
             if (!IsDisposed)
             {
-                Process.Kill();
+                WorkerProcess.Kill();
                 IsDisposedInternal = true;
             }
         }
@@ -128,12 +143,12 @@ namespace Rove.Model
                 return false;
             }
 
-            return Process.Id == other.Process.Id;
+            return GuiProcess.Id == other.GuiProcess.Id;
         }
 
         public override int GetHashCode()
         {
-            return Process.Id;
+            return GuiProcess.Id;
         }
     }
 
