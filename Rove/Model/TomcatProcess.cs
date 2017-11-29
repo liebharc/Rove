@@ -12,7 +12,7 @@ namespace Rove.Model
         {
             get
             {
-                return Process.GetProcessesByName("notepad")
+                return Process.GetProcessesByName("java")
                     .Select(p => new TomcatProcessInfo(p))
                     .ToList();
             }
@@ -60,8 +60,18 @@ namespace Rove.Model
                 throw new ArgumentNullException(nameof(process));
             }
 
-            Process = process;
-            MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(process);
+            var parent = process.Parent();
+            if (parent != null && parent.ProcessName == "cmd")
+            {
+                Process = parent;
+            }
+            else
+            {
+                Process = process;
+            }
+            
+            MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(Process);
+
             Id = process.Id;
             Hide();
         }
@@ -135,5 +145,42 @@ namespace Rove.Model
         internal const int SW_HIDE = 0;
 
         internal const int SW_SHOW = 5;
+    }
+
+    internal static class ProcessExtensions
+    {
+        private static string FindIndexedProcessName(int pid)
+        {
+            var processName = Process.GetProcessById(pid).ProcessName;
+            var processesByName = Process.GetProcessesByName(processName);
+            string processIndexedName = null;
+            for (int index = 0; index < processesByName.Length; index++)
+            {
+                processIndexedName = index == 0 ? processName : processName + "#" + index;
+                var processId = new PerformanceCounter("Process", "ID Process", processIndexedName);
+                if ((int)processId.NextValue() == pid)
+                {
+                    return processIndexedName;
+                }
+            }
+
+            return processIndexedName;
+        }
+
+        private static Process FindPidFromIndexedProcessName(string indexedProcessName)
+        {
+            var parentId = new PerformanceCounter("Process", "Creating Process ID", indexedProcessName);
+            return Process.GetProcessById((int)parentId.NextValue());
+        }
+
+        public static Process Parent(this Process process)
+        {
+            if (process == null)
+            {
+                throw new ArgumentNullException(nameof(process));
+            }
+
+            return FindPidFromIndexedProcessName(FindIndexedProcessName(process.Id));
+        }
     }
 }
