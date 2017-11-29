@@ -2,11 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Input;
 
 namespace Rove.ViewModel
 {
-    public sealed class TomcatProcessViewModel : IDisposable
+    public sealed class TomcatProcessViewModel : IDisposable, INotifyPropertyChanged
     {
         private TomcatProcessControl Tomcat { get; }
 
@@ -21,8 +22,25 @@ namespace Rove.ViewModel
         public TomcatProcessViewModel(TomcatProcessControl tomcat)
         {
             Tomcat = tomcat;
-            Close = new LambdaCommand(() => tomcat.Kill());
+            Close = new LambdaCommand(() => Tomcat.Kill());
+            ShowHide = new LambdaCommand(() =>
+            {
+                if (IsVisible)
+                {
+                    Tomcat.Hide();
+                    IsVisible = false;
+                }
+                else
+                {
+                    Tomcat.Show();
+                    IsVisible = true;
+                }
+
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
+            });
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public void Dispose()
         {
@@ -38,6 +56,8 @@ namespace Rove.ViewModel
         {
             return base.Equals(obj);
         }
+
+        public bool IsVisible { get; set; } = false;
 
         public bool Equals(TomcatProcessViewModel other)
         {

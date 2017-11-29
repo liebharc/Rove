@@ -8,8 +8,11 @@
              d:DesignHeight="300" d:DesignWidth="300">
     <DockPanel LastChildFill="True">
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+            <StackPanel.Resources>
+                <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
+            </StackPanel.Resources>
             <Label>Title</Label>
-            <Button Command="{Binding ShowHide}">Show</Button>
+            <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" /> 
             <Button>Open Log ...</Button>
             <Button Command="{Binding Close}">x</Button>
         </StackPanel>
