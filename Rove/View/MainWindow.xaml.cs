@@ -48,12 +48,12 @@ namespace Rove.View
             }
             catch (ArgumentException ex)
             {
-                MessageBox.Show("Error with configuration: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Result.Error("Error with configuration: " + ex.Message).Report();
                 Environment.Exit(0);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Result.Error(ex.Message).Report();
                 Environment.Exit(0);
             }
             TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection(config);

@@ -43,7 +43,7 @@ namespace Rove.ViewModel
                 throw new ArgumentNullException(nameof(processConfig));
             }
 
-            StartProcess = new LambdaCommand(() => Script.Run(processConfig.StartProcessScript));
+            StartProcess = new LambdaCommand(() => ProcessUtils.Run(processConfig.StartProcessScript).Report());
             Close = new LambdaCommand(() => Tomcat?.Kill());
             ShowHide = new LambdaCommand(() =>
             {
