@@ -26,7 +26,7 @@ namespace Rove.Model
                 StdErrLinesLazy = new Lazy<List<string>>(() =>
                 {
                     List<string> result = new List<string>();
-                    while (!stdOut.EndOfStream)
+                    while (!stdErr.EndOfStream)
                     {
                         result.Add(stdErr.ReadLine());
                     }
@@ -47,7 +47,7 @@ namespace Rove.Model
                     return Result.Error("Process exited with " + ExitCode);
                 }
 
-                if (StdOut.Count != 0)
+                if (StdErr.Count != 0)
                 {
                     return Result.Error("Process has written errors:\n" + string.Join("\n", StdErr));
                 }
@@ -58,6 +58,16 @@ namespace Rove.Model
 
         public static ScriptResult Run(FileInfo script, IEnumerable<string> arguments = null, IDictionary<string, string> environment = null)
         {
+            if (script.Extension == ".ps1")
+            {
+                return RunPowerShell(script, arguments, environment);
+            }
+
+            return RunCmdOrExe(script, arguments, environment);
+        }
+
+        private static ScriptResult RunCmdOrExe(FileInfo script, IEnumerable<string> arguments, IDictionary<string, string> environment)
+        {
             var ps = new ProcessStartInfo();
             ps.FileName = script.FullName;
             if (arguments != null)
@@ -65,6 +75,24 @@ namespace Rove.Model
                 ps.Arguments = string.Join(" ", arguments);
             }
 
+            SetEnvironment(environment, ps);
+            SetProcessDefaultValues(ps);
+
+            var process = Process.Start(ps);
+
+            return new ScriptResult(process.ExitCode, process.StandardOutput, process.StandardError);
+        }
+
+        private static void SetProcessDefaultValues(ProcessStartInfo ps)
+        {
+            ps.UseShellExecute = false;
+            ps.RedirectStandardOutput = true;
+            ps.RedirectStandardError = true;
+            ps.CreateNoWindow = true;
+        }
+
+        private static void SetEnvironment(IDictionary<string, string> environment, ProcessStartInfo ps)
+        {
             if (environment != null)
             {
                 foreach (var pair in environment)
@@ -72,12 +100,22 @@ namespace Rove.Model
                     ps.Environment.Add(pair.Key, pair.Value);
                 }
             }
+        }
 
-            ps.UseShellExecute = false;
-            ps.RedirectStandardOutput = true;
-            ps.RedirectStandardError = true;
+        private static ScriptResult RunPowerShell(FileInfo script, IEnumerable<string> arguments, IDictionary<string, string> environment)
+        {
+            var ps = new ProcessStartInfo();
+            ps.FileName = "powershell";
+            if (arguments != null)
+            {
+                ps.Arguments = script + " " + string.Join(" ", arguments);
+            }
+
+            SetEnvironment(environment, ps);
+            SetProcessDefaultValues(ps);
 
             var process = Process.Start(ps);
+            process.WaitForExit();
 
             return new ScriptResult(process.ExitCode, process.StandardOutput, process.StandardError);
         }

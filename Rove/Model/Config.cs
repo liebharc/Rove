@@ -46,7 +46,7 @@ namespace Rove.Model
     {
         public OverallConfig(OverallConfigSerialize ser)
         {
-            OnNewProcessScript = ProcessConfig.GetPath(nameof(ser.OnNewProcessScript), ser.OnNewProcessScript);
+            OnNewProcessScript = Converstions.GetOptionalPath(nameof(ser.OnNewProcessScript), ser.OnNewProcessScript);
             foreach (var s in ser.ProcessConfigs)
             {
                 ProcessConfigs.Add(s.ToProcessConfig());
@@ -90,41 +90,13 @@ namespace Rove.Model
             }
 
             ProcessName = ser.ProcessName;
-            WarningMessage = CompileRegex(nameof(ser.WarningMessage), ser.WarningMessage);
-            ErrorMessage = CompileRegex(nameof(ser.ErrorMessage), ser.ErrorMessage);
-            OnProcessStartedScript = GetPath(nameof(ser.OnProcessStartedScript), ser.OnProcessStartedScript);
-            FindLogFileScript = GetPath(nameof(ser.FindLogFileScript), ser.FindLogFileScript);
-            IsKnownProcess = CompileRegex(nameof(ser.IsKnownProcess), ser.IsKnownProcess);
-            StartProcessScript = GetPath(nameof(ser.StartProcessScript), ser.StartProcessScript);
+            WarningMessage = Converstions.CompileRegex(nameof(ser.WarningMessage), ser.WarningMessage);
+            ErrorMessage = Converstions.CompileRegex(nameof(ser.ErrorMessage), ser.ErrorMessage);
+            OnProcessStartedScript = Converstions.GetOptionalPath(nameof(ser.OnProcessStartedScript), ser.OnProcessStartedScript);
+            FindLogFileScript = Converstions.GetMandatoryPath(nameof(ser.FindLogFileScript), ser.FindLogFileScript);
+            IsKnownProcess = Converstions.CompileRegex(nameof(ser.IsKnownProcess), ser.IsKnownProcess);
+            StartProcessScript = Converstions.GetMandatoryPath(nameof(ser.StartProcessScript), ser.StartProcessScript);
         }
-
-        private static Regex CompileRegex(string argName, string regex)
-        {
-            try
-            {
-                return new Regex(regex);
-            }
-            catch (Exception)
-            {
-                throw new ArgumentException(argName);
-            }
-        }
-
-        public static FileInfo GetPath(string argName, string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                return null;
-            }
-
-            if (!File.Exists(path))
-            {
-                throw new ArgumentException(argName);
-            }
-
-            return new FileInfo(path);
-        }
-
 
         public string ProcessName { get;} 
 
@@ -140,6 +112,46 @@ namespace Rove.Model
 
         public FileInfo StartProcessScript { get; }
 
+    }
+
+    public static class Converstions
+    {
+        public static Regex CompileRegex(string argName, string regex)
+        {
+            try
+            {
+                return new Regex(regex);
+            }
+            catch (Exception)
+            {
+                throw new ArgumentException(argName);
+            }
+        }
+
+        public static FileInfo GetOptionalPath(string argName, string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            return GetMandatoryPath(argName, path);
+        }
+
+        public static FileInfo GetMandatoryPath(string argName, string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException(argName);
+            }
+
+            if (!File.Exists(path))
+            {
+                throw new ArgumentException(argName);
+            }
+
+            return new FileInfo(path);
+        }
     }
 
     public static class ConfigSerializer

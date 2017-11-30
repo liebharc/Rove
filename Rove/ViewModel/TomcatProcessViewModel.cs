@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Windows.Input;
 
@@ -86,6 +87,7 @@ namespace Rove.ViewModel
                     ?.Control();
                 if (Tomcat != null)
                 {
+                    OnNewTomcat();
                     OnTomcatChanged();
                 }
             }
@@ -94,6 +96,57 @@ namespace Rove.ViewModel
                 Tomcat = null;
                 OnTomcatChanged();
             }
+        }
+
+        private void OnNewTomcat()
+        {
+            if (Config.OnNewProcessScript != null)
+            {
+                Script.Run(Config.OnNewProcessScript, new[] { Quote(Tomcat.CommandLine) }).Check().Report();
+            }
+
+            if (ProcessConfig.OnProcessStartedScript != null)
+            {
+                Script.Run(ProcessConfig.OnProcessStartedScript, new[] { Quote(Tomcat.CommandLine) }).Check().Report();
+            }
+
+            var logResult = Script.Run(ProcessConfig.FindLogFileScript, new[] { Quote(Tomcat.CommandLine) });
+            if (logResult.Check().IsError)
+            {
+                logResult.Check().Report();
+            }
+            else if (logResult.StdOut.Count == 0)
+            {
+                Result.Error(ProcessConfig.FindLogFileScript + " returned no result");
+            }
+            else if (logResult.StdOut.Count > 1)
+            {
+                Result.Error(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut));
+            }
+            else
+            {
+                var file = logResult.StdOut.First();
+                try
+                {
+                    if (File.Exists(file))
+                    {
+                        // TODO tail log file
+                    }
+                    else
+                    {
+                        Result.Error(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Result.Error(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file + " error was " + ex.Message);
+                }
+            }
+        }
+
+        private static string Quote(string text)
+        {
+            return "'" + text + "'";
         }
 
         private void OnTomcatChanged()

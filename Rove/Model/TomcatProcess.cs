@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.ComponentModel;
+using System.IO;
 
 namespace Rove.Model
 {
@@ -40,7 +41,7 @@ namespace Rove.Model
 
         public TomcatProcessControl Control()
         {
-            return new TomcatProcessControl(Process);
+            return new TomcatProcessControl(Process, CommandLine);
         }
     }
 
@@ -48,11 +49,15 @@ namespace Rove.Model
     {
         private Process WorkerProcess { get; set; }
 
+        public string CommandLine { get; }
+
         private Process GuiProcess { get; set; }
 
         private IntPtr MainWindowHandle { get; }
 
         private bool IsDisposedInternal { get; set; } = false;
+
+        public int Id { get; }
 
         public bool IsDisposed {
             get
@@ -76,9 +81,7 @@ namespace Rove.Model
             }
         }
 
-        public int Id { get; }
-
-        public TomcatProcessControl(Process process)
+        public TomcatProcessControl(Process process, string commandLine)
         {
             if (process == null)
             {
@@ -98,6 +101,7 @@ namespace Rove.Model
             MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(GuiProcess);
 
             WorkerProcess = process;
+            CommandLine = commandLine;
             Id = WorkerProcess.Id;
             Hide();
         }
