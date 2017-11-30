@@ -40,7 +40,7 @@ namespace Rove.View
         public MainWindow()
         {
             InitializeComponent();
-            OverallConfig config;
+            OverallConfig config = null;
             try
             {
                 CreateDefaultConfigFile();
@@ -56,9 +56,10 @@ namespace Rove.View
                 MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Environment.Exit(0);
             }
-            TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection();
+            TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection(config);
+            CreateAPanelForEachProcess(viewModel.Processes);
+
             DataContext = viewModel;
-            viewModel.Processes.CollectionChanged += Processes_CollectionChanged;
             Closed += MainWindow_Closed;
 
             Timer.Interval = TimeSpan.FromSeconds(0.1);
@@ -89,41 +90,22 @@ namespace Rove.View
             }
         }
 
-        private void Processes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        private void CreateAPanelForEachProcess(IList<TomcatProcessViewModel> processes)
         {
-            // TODO replace grid with more suitable GUI control
-            var newItems = ToGenericList(e.NewItems);
-            var oldItems = ToGenericList(e.OldItems);
-            var added = newItems.Except(oldItems);
-            var removed = oldItems.Except(newItems);
-            if (removed.Any())
-            {
-                for (int i = 0; i < Grid.Children.Count; i++)
-                {
-                    var child = Grid.Children[i] as UserControl;
-                    if (child != null && child.DataContext != null && removed.Contains(child.DataContext))
-                    {
-                        Grid.Children.RemoveAt(i);
-                        i--;
-                    }
-                }
-            }
-
-            foreach (var addition in added)
-            {
-                Grid.Children.Add(new ProcessInfo { DataContext = addition });
-            }
-
             const int RowSize = 3;
-            int rows = (Grid.Children.Count + RowSize - 1) / RowSize;
-            int columns = Math.Min(3, Grid.Children.Count);
+            var childCount = processes.Count;
+            int rows = (childCount + RowSize - 1) / RowSize;
+            int columns = Math.Min(3, childCount);
             SetGridRows(rows);
             SetGridCols(columns);
-            for (int i = 0; i < Grid.Children.Count; i++)
+            int i = 0;
+            foreach (var process in processes)
             {
-                var child = Grid.Children[i] as UserControl;
-                Grid.SetRow(child, i / RowSize);
-                Grid.SetColumn(child, i % RowSize);
+                var panel = new ProcessInfo { DataContext = process };
+                Grid.SetRow(panel, i / RowSize);
+                Grid.SetColumn(panel, i % RowSize);
+                Grid.Children.Add(panel);
+                i++;
             }
         }
 

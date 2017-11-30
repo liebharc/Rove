@@ -23,7 +23,8 @@ namespace Rove.Model
                     WarningMessage = ".*WARN.*",
                     OnProcessStartedScript = "OnProcessStartedScript.ps1",
                     FindLogFileScript = "FindLogFileScript.ps1",
-                    IsKnownProcessScript = "IsKnownProcessScript.ps1"
+                    IsKnownProcess= ".*",
+                    StartProcessScript ="StartProcessScript.ps1"
                 };
 
                 config.ProcessConfigs.Add(process);
@@ -69,7 +70,9 @@ namespace Rove.Model
 
         public string FindLogFileScript { get; set; } = string.Empty;
 
-        public string IsKnownProcessScript { get; set; } = string.Empty;
+        public string IsKnownProcess { get; set; } = string.Empty;
+
+        public string StartProcessScript { get; set; } = string.Empty;
 
         public ProcessConfig ToProcessConfig()
         {
@@ -91,7 +94,8 @@ namespace Rove.Model
             ErrorMessage = CompileRegex(nameof(ser.ErrorMessage), ser.ErrorMessage);
             OnProcessStartedScript = GetPath(nameof(ser.OnProcessStartedScript), ser.OnProcessStartedScript);
             FindLogFileScript = GetPath(nameof(ser.FindLogFileScript), ser.FindLogFileScript);
-            IsKnownProcessScript = GetPath(nameof(ser.IsKnownProcessScript), ser.IsKnownProcessScript);
+            IsKnownProcess = CompileRegex(nameof(ser.IsKnownProcess), ser.IsKnownProcess);
+            StartProcessScript = GetPath(nameof(ser.StartProcessScript), ser.StartProcessScript);
         }
 
         private static Regex CompileRegex(string argName, string regex)
@@ -132,7 +136,9 @@ namespace Rove.Model
 
         public FileInfo FindLogFileScript { get; }
 
-        public FileInfo IsKnownProcessScript { get; }
+        public Regex IsKnownProcess { get; }
+
+        public FileInfo StartProcessScript { get; }
 
     }
 

@@ -9,64 +9,74 @@ namespace Rove.ViewModel
 {
     public sealed class TomcatProcessViewModel : IDisposable, INotifyPropertyChanged
     {
-        private TomcatProcessControl Tomcat { get; }
+        private TomcatProcessControl Tomcat { get; set; }
+
+        public OverallConfig Config { get; }
+
+        public ProcessConfig ProcessConfig { get; }
 
         public ICommand Close { get; }
 
         public ICommand ShowHide { get; }
 
+        public ICommand StartProcess { get; }
+
         public bool IsDisposed => Tomcat.IsDisposed;
 
         public int Id => Tomcat.Id;
 
-        public TomcatProcessViewModel(TomcatProcessControl tomcat)
+        public bool IsVisible { get; private set; } = false;
+
+        public bool IsEnabled => Tomcat != null && !Tomcat.IsDisposed;
+
+        public string Title => ProcessConfig.ProcessName;
+
+        public TomcatProcessViewModel(OverallConfig config, ProcessConfig processConfig)
         {
-            Tomcat = tomcat;
-            Close = new LambdaCommand(() => Tomcat.Kill());
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+
+            if (processConfig == null)
+            {
+                throw new ArgumentNullException(nameof(processConfig));
+            }
+
+            StartProcess = new LambdaCommand(() => Script.Run(processConfig.StartProcessScript));
+            Close = new LambdaCommand(() => Tomcat?.Kill());
             ShowHide = new LambdaCommand(() =>
             {
                 if (IsVisible)
                 {
-                    Tomcat.Hide();
+                    Tomcat?.Hide();
                     IsVisible = false;
                 }
                 else
                 {
-                    Tomcat.Show();
+                    Tomcat?.Show();
                     IsVisible = true;
                 }
 
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
             });
+            Config = config;
+            ProcessConfig = processConfig;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public void Dispose()
         {
-            Tomcat.Dispose();
+            Tomcat?.Dispose();
         }
 
-        public override int GetHashCode()
+        internal void Update()
         {
-            return Tomcat.GetHashCode();
-        }
-
-        public override bool Equals(object obj)
-        {
-            return base.Equals(obj);
-        }
-
-        public bool IsVisible { get; set; } = false;
-
-        public bool Equals(TomcatProcessViewModel other)
-        {
-            if (other == null)
+            if (Tomcat == null || Tomcat.IsDisposed)
             {
-                return false;
+                Tomcat = null;
             }
-
-            return Tomcat.Equals(other.Tomcat);
         }
     }
 
@@ -75,7 +85,18 @@ namespace Rove.ViewModel
         public ObservableCollection<TomcatProcessViewModel> Processes { get; } 
             = new ObservableCollection<TomcatProcessViewModel>();
 
-        private List<int> CapturedProcessIds { get; } = new List<int>();
+        public TomcatProcessViewModelCollection(OverallConfig config)
+        {
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+
+            foreach (var process in config.ProcessConfigs)
+            {
+                Processes.Add(new TomcatProcessViewModel(config, process));
+            }
+        }
 
         public void Dispose()
         {
@@ -87,25 +108,9 @@ namespace Rove.ViewModel
 
         internal void Update()
         {
-            var processes = TomcatProcessInfo.RunningTomcatProcesses;
-            foreach (var process in processes)
+            foreach (var process in Processes)
             {
-                if (!CapturedProcessIds.Contains(process.Id))
-                {
-                    CapturedProcessIds.Add(process.Id);
-                    Processes.Add(new TomcatProcessViewModel(process.Control()));
-                }
-            }
-
-            for (int i = 0; i < Processes.Count; i++)
-            {
-                var process = Processes[i];
-                if (process.IsDisposed)
-                {
-                    CapturedProcessIds.Remove(process.Id);
-                    Processes.RemoveAt(i);
-                    i--;
-                }
+                process.Update();
             }
         }
     }

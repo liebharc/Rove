@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 namespace Rove.Model
 {
@@ -58,7 +59,15 @@ namespace Rove.Model
                 {
                     return IsDisposedInternal || WorkerProcess.HasExited;
                 }
-                catch (Exception)
+                catch (InvalidOperationException)
+                {
+                    return true;
+                }
+                catch (NotSupportedException)
+                {
+                    return true;
+                }
+                catch (Win32Exception)
                 {
                     return true;
                 }

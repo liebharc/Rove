@@ -6,24 +6,31 @@
              xmlns:local="clr-namespace:Rove.View"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <DockPanel LastChildFill="True">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <StackPanel.Resources>
-                <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
-            </StackPanel.Resources>
-            <Label>Title</Label>
-            <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" /> 
-            <Button>Open Log ...</Button>
-            <Button Command="{Binding Close}">x</Button>
-        </StackPanel>
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Label>Warnings</Label>
-            <Label>0</Label>
-            <Label>Errors</Label>
-            <Label>0</Label>
-        </StackPanel>
-        <ScrollViewer DockPanel.Dock="Bottom" >
-            <TextBox />
-        </ScrollViewer>
-    </DockPanel>
+    <Grid>
+        <Grid.Resources>
+            <local:ShowOnDisabledConverter x:Key="ShowOnDisabled"/>
+        </Grid.Resources>
+        <DockPanel LastChildFill="True" IsEnabled="{Binding Path=IsEnabled}">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                <StackPanel.Resources>
+                    <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
+                </StackPanel.Resources>
+                <Label Content="{Binding Title}"/>
+                <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" /> 
+                <Button>Open Log ...</Button>
+                <Button Command="{Binding Close}">x</Button>
+            </StackPanel>
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Label>Warnings</Label>
+                <Label>0</Label>
+                <Label>Errors</Label>
+                <Label>0</Label>
+            </StackPanel>
+            <ScrollViewer DockPanel.Dock="Bottom" >
+                <TextBox />
+            </ScrollViewer>
+        </DockPanel>
+        <Button Content="Start" Command="{Binding StartProcess}" Visibility="{Binding Path=IsEnabled, Converter={StaticResource ShowOnDisabled}}"
+                HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
 </UserControl>
