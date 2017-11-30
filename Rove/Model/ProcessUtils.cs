@@ -7,11 +7,21 @@ namespace Rove.Model
 {
     public static class ProcessUtils
     {
-        public static Result Run(FileInfo path)
+        public static Result Run(FileInfo path, string arguments = null)
+        {
+            return Run(path.FullName, arguments);
+        }
+
+        public static Result Run(string command, string arguments = null)
         {
             try
             {
-                Process.Start(path.FullName);
+                if (arguments == null)
+                {
+                    arguments = string.Empty;
+                }
+
+                Process.Start(command, arguments);
                 return Result.Success;
             }
             catch (Win32Exception ex)

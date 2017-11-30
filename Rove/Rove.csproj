@@ -58,6 +58,7 @@
     <Compile Include="Model\ProcessUtils.cs" />
     <Compile Include="Model\Result.cs" />
     <Compile Include="Model\Script.cs" />
+    <Compile Include="Model\TailLogFile.cs" />
     <Compile Include="ViewModel\LambdaCommand.cs" />
     <Compile Include="ViewModel\ResultReporter.cs" />
     <Compile Include="ViewModel\TomcatProcessViewModel.cs" />

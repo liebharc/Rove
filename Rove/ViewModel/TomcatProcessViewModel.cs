@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Windows;
 using System.Windows.Input;
 
 namespace Rove.ViewModel
@@ -12,6 +13,8 @@ namespace Rove.ViewModel
     public sealed class TomcatProcessViewModel : IDisposable, INotifyPropertyChanged
     {
         private TomcatProcessControl Tomcat { get; set; }
+
+        private TailLogFile LogFile { get; set; }
 
         public OverallConfig Config { get; }
 
@@ -22,6 +25,8 @@ namespace Rove.ViewModel
         public ICommand ShowHide { get; }
 
         public ICommand StartProcess { get; }
+
+        public ICommand OpenLogFile { get; }
 
         public bool IsDisposed => Tomcat.IsDisposed;
 
@@ -34,6 +39,8 @@ namespace Rove.ViewModel
         public string Title => ProcessConfig.ProcessName;
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public ObservableCollection<string> Log { get; } = new ObservableCollection<string>();
 
         public TomcatProcessViewModel(OverallConfig config, ProcessConfig processConfig)
         {
@@ -49,6 +56,7 @@ namespace Rove.ViewModel
 
             StartProcess = new LambdaCommand(() => ProcessUtils.Run(processConfig.StartProcessScript).Report());
             Close = new LambdaCommand(() => Tomcat?.Kill());
+            OpenLogFile = new LambdaCommand(() => ProcessUtils.Run("explorer.exe", QuoteDouble(LogFile.File.FullName)).Report());
             ShowHide = new LambdaCommand(() =>
             {
                 if (IsVisible)
@@ -71,6 +79,12 @@ namespace Rove.ViewModel
         public void Dispose()
         {
             Tomcat?.Dispose();
+            if (LogFile != null)
+            {
+                LogFile.Dispose();
+                LogFile.NewMessagesArrived -= LogFile_NewMessagesArrived;
+                LogFile = null;
+            }
         }
 
         private void OnPropertyChanged(string property)
@@ -88,29 +102,38 @@ namespace Rove.ViewModel
                 if (Tomcat != null)
                 {
                     OnNewTomcat();
+                    IsVisible = false;
                     OnTomcatChanged();
                 }
             }
             else if (Tomcat.IsDisposed)
             {
                 Tomcat = null;
+                IsVisible = false;
                 OnTomcatChanged();
             }
         }
 
         private void OnNewTomcat()
         {
+            if (LogFile != null)
+            {
+                LogFile.Dispose();
+                LogFile.NewMessagesArrived -= LogFile_NewMessagesArrived;
+                LogFile = null;
+            }
+
             if (Config.OnNewProcessScript != null)
             {
-                Script.Run(Config.OnNewProcessScript, new[] { Quote(Tomcat.CommandLine) }).Check().Report();
+                Script.Run(Config.OnNewProcessScript, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
             }
 
             if (ProcessConfig.OnProcessStartedScript != null)
             {
-                Script.Run(ProcessConfig.OnProcessStartedScript, new[] { Quote(Tomcat.CommandLine) }).Check().Report();
+                Script.Run(ProcessConfig.OnProcessStartedScript, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
             }
 
-            var logResult = Script.Run(ProcessConfig.FindLogFileScript, new[] { Quote(Tomcat.CommandLine) });
+            var logResult = Script.Run(ProcessConfig.FindLogFileScript, new[] { QuoteSingle(Tomcat.CommandLine) });
             if (logResult.Check().IsError)
             {
                 logResult.Check().Report();
@@ -130,7 +153,9 @@ namespace Rove.ViewModel
                 {
                     if (File.Exists(file))
                     {
-                        // TODO tail log file
+                        LogFile = new TailLogFile(new FileInfo(file));
+                        LogFile.NewMessagesArrived += LogFile_NewMessagesArrived;
+                        LogFile.Start();
                     }
                     else
                     {
@@ -144,9 +169,33 @@ namespace Rove.ViewModel
             }
         }
 
-        private static string Quote(string text)
+        private void LogFile_NewMessagesArrived(IEnumerable<string> lines)
+        {
+            if (!Application.Current.Dispatcher.CheckAccess())
+            {
+                Application.Current.Dispatcher.Invoke(() => LogFile_NewMessagesArrived(lines));
+                return;
+            }
+
+            foreach (var line in lines)
+            {
+                Log.Add(line);
+            }
+
+            while (Log.Count > Config.LogHistory)
+            {
+                Log.RemoveAt(0);
+            }
+        }
+
+        private static string QuoteSingle(string text)
         {
             return "'" + text + "'";
+        }
+
+        private static string QuoteDouble(string text)
+        {
+            return "\"" + text + "\"";
         }
 
         private void OnTomcatChanged()

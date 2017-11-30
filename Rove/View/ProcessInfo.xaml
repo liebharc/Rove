@@ -16,8 +16,8 @@
                     <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
                 </StackPanel.Resources>
                 <Label Content="{Binding Title}"/>
-                <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" /> 
-                <Button>Open Log ...</Button>
+                <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" />
+                <Button Command="{Binding OpenLogFile}">Open Log ...</Button>
                 <Button Command="{Binding Close}">x</Button>
             </StackPanel>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -27,7 +27,7 @@
                 <Label>0</Label>
             </StackPanel>
             <ScrollViewer DockPanel.Dock="Bottom" >
-                <TextBox />
+                <ListBox ItemsSource="{Binding Log}" />
             </ScrollViewer>
         </DockPanel>
         <Button Content="Start" Command="{Binding StartProcess}" Visibility="{Binding Path=IsEnabled, Converter={StaticResource ShowOnDisabled}}"
