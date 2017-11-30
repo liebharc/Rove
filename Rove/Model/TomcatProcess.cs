@@ -23,7 +23,9 @@ namespace Rove.Model
 
         public int Id => Process.Id;
 
-        private Lazy<string> CommandLine { get; }
+        private Lazy<string> CommandLineInternal { get; }
+
+        public string CommandLine => CommandLineInternal.Value;
 
         public TomcatProcessInfo(Process process)
         {
@@ -33,7 +35,7 @@ namespace Rove.Model
             }
 
             Process = process;
-            CommandLine = new Lazy<string>(() => string.Format("select CommandLine from Win32_Process where ProcessID ='{0}'", Process.Id));
+            CommandLineInternal = new Lazy<string>(() => string.Format("select CommandLine from Win32_Process where ProcessID ='{0}'", Process.Id));
         }
 
         public TomcatProcessControl Control()

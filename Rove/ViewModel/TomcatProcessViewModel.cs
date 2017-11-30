@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows.Input;
 
 namespace Rove.ViewModel
@@ -30,6 +31,8 @@ namespace Rove.ViewModel
         public bool IsEnabled => Tomcat != null && !Tomcat.IsDisposed;
 
         public string Title => ProcessConfig.ProcessName;
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public TomcatProcessViewModel(OverallConfig config, ProcessConfig processConfig)
         {
@@ -64,19 +67,40 @@ namespace Rove.ViewModel
             ProcessConfig = processConfig;
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
         public void Dispose()
         {
             Tomcat?.Dispose();
         }
 
-        internal void Update()
+        private void OnPropertyChanged(string property)
         {
-            if (Tomcat == null || Tomcat.IsDisposed)
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+        }
+
+        public void Update(IEnumerable<TomcatProcessInfo> tomcats)
+        {
+            if (Tomcat == null)
+            {
+                Tomcat = tomcats
+                    .FirstOrDefault(t => ProcessConfig.IsKnownProcess.IsMatch(t.CommandLine))
+                    ?.Control();
+                if (Tomcat != null)
+                {
+                    OnTomcatChanged();
+                }
+            }
+            else if (Tomcat.IsDisposed)
             {
                 Tomcat = null;
+                OnTomcatChanged();
             }
+        }
+
+        private void OnTomcatChanged()
+        {
+            OnPropertyChanged(nameof(Tomcat));
+            OnPropertyChanged(nameof(IsEnabled));
+            OnPropertyChanged(nameof(IsVisible));
         }
     }
 
@@ -108,9 +132,10 @@ namespace Rove.ViewModel
 
         internal void Update()
         {
+            var tomcats = TomcatProcessInfo.RunningTomcatProcesses;
             foreach (var process in Processes)
             {
-                process.Update();
+                process.Update(tomcats);
             }
         }
     }
