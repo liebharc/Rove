@@ -6,12 +6,12 @@
              xmlns:local="clr-namespace:Rove.View"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid Background="{Binding Color}">
+    <Grid>
         <Grid.Resources>
             <local:ShowOnDisabledConverter x:Key="ShowOnDisabled"/>
         </Grid.Resources>
         <DockPanel LastChildFill="True" IsEnabled="{Binding Path=IsEnabled}">
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Background="{Binding Color}">
                 <StackPanel.Resources>
                     <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
                 </StackPanel.Resources>
