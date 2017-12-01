@@ -7,6 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
+using Rove.View;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
 
 namespace Rove.ViewModel
 {
@@ -40,7 +44,25 @@ namespace Rove.ViewModel
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ObservableCollection<string> Log { get; } = new ObservableCollection<string>();
+        private RichTextBox Logger { get; set; }
+
+        private int LineCount { get; set; }
+
+        private bool _autoScroll = true;
+
+        public bool AutoScroll
+        {
+            get
+            {
+                return _autoScroll;
+            }
+
+            set
+            {
+                _autoScroll = value;
+                OnPropertyChanged(nameof(AutoScroll));
+            }
+        }
 
         public TomcatProcessViewModel(OverallConfig config, ProcessConfig processConfig)
         {
@@ -114,6 +136,11 @@ namespace Rove.ViewModel
             }
         }
 
+        internal void Initialize(ProcessInfo panel)
+        {
+            Logger = panel.Log;
+        }
+
         private void OnNewTomcat()
         {
             if (LogFile != null)
@@ -176,16 +203,42 @@ namespace Rove.ViewModel
                 Application.Current.Dispatcher.Invoke(() => LogFile_NewMessagesArrived(lines));
                 return;
             }
-
+            
             foreach (var line in lines)
             {
                 // TODO count warnings and errors, display them and allow the user to clear them. Also check for startup message.s
-                Log.Add(line);
+                Write(line, LogColors.InfoForeground);
+            }
+        }
+
+
+        private void Write(string logMessage, SolidColorBrush foreground)
+        {
+            if (Logger == null)
+            {
+                return;
             }
 
-            while (Log.Count > Config.LogHistory)
+            var tr = new TextRange(Logger.Document.ContentEnd, Logger.Document.ContentEnd);
+            tr.Text = logMessage + "\n";
+            tr.ApplyPropertyValue(TextElement.ForegroundProperty, foreground);
+            
+            if (Config.LogHistory > 0)
             {
-                Log.RemoveAt(0);
+                LineCount++;
+                if (LineCount > Config.LogHistory)
+                {
+                    tr = new TextRange(Logger.Document.ContentStart, Logger.Document.ContentEnd);
+                    tr.Text = tr.Text.Remove(0, tr.Text.IndexOf('\n'));
+                    LineCount--;
+                }
+            }
+
+            Logger.AppendText(tr.Text);
+
+            if (AutoScroll)
+            {
+                Logger.ScrollToEnd();
             }
         }
 
@@ -218,7 +271,7 @@ namespace Rove.ViewModel
             {
                 throw new ArgumentNullException(nameof(config));
             }
-
+            
             foreach (var process in config.ProcessConfigs)
             {
                 Processes.Add(new TomcatProcessViewModel(config, process));

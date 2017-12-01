@@ -175,38 +175,11 @@ namespace Rove.Model
 
         internal static Color GetColor(string argName, string color)
         {
-            if (string.IsNullOrEmpty(color))
-            {
-                return Colors.Transparent;
-            }
-
-            if (color.StartsWith("#"))
-            {
-                color = color.Substring(1);
-            }
-            
-            if (color.Length != 6)
-            {
-                throw new ArgumentException(argName);
-            }
-
             try
             {
-                byte r = Convert.ToByte(color.Substring(0, 2), 16);
-                byte g = Convert.ToByte(color.Substring(2, 2), 16);
-                byte b = Convert.ToByte(color.Substring(4, 2), 16);
-
-                return Color.FromRgb(r, g, b);
+                return (Color)ColorConverter.ConvertFromString(color);
             }
-            catch (ArgumentException ex)
-            {
-                throw new ArgumentException(argName, ex);
-            }
-            catch (FormatException ex)
-            {
-                throw new ArgumentException(argName, ex);
-            }
-            catch (OverflowException ex)
+            catch (NotSupportedException ex)
             {
                 throw new ArgumentException(argName, ex);
             }

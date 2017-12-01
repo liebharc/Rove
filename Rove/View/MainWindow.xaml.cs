@@ -102,6 +102,7 @@ namespace Rove.View
             foreach (var process in processes)
             {
                 var panel = new ProcessInfo { DataContext = process };
+                process.Initialize(panel);
                 Grid.SetRow(panel, i / RowSize);
                 Grid.SetColumn(panel, i % RowSize);
                 Grid.Children.Add(panel);

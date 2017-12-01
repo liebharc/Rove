@@ -40,5 +40,15 @@ namespace Rove.View
         {
             InitializeComponent();
         }
+
+        private void Log_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void Log_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            e.Handled = true;
+        }
     }
 }

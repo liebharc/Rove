@@ -27,7 +27,9 @@
                 <Label>0</Label>
             </StackPanel>
             <ScrollViewer DockPanel.Dock="Bottom" >
-                <ListBox ItemsSource="{Binding Log}" />
+                <RichTextBox Name="Log" FontFamily="Courier New" 
+                             PreviewKeyDown="Log_PreviewKeyDown" 
+                             PreviewTextInput="Log_PreviewTextInput"/>
             </ScrollViewer>
         </DockPanel>
         <Button Content="Start" Command="{Binding StartProcess}" Visibility="{Binding Path=IsEnabled, Converter={StaticResource ShowOnDisabled}}"
