@@ -82,6 +82,7 @@
     <Compile Include="ViewModel\LambdaCommand.cs" />
     <Compile Include="ViewModel\ResultReporter.cs" />
     <Compile Include="ViewModel\TomcatProcessViewModel.cs" />
+    <Compile Include="ViewModel\TomcatProcessViewModelCollection.cs" />
     <Compile Include="View\ProcessInfo.xaml.cs">
       <DependentUpon>ProcessInfo.xaml</DependentUpon>
     </Compile>
