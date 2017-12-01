@@ -21,10 +21,13 @@
                 <Button Command="{Binding Close}">x</Button>
             </StackPanel>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Label>Startup</Label>
+                <Label Content="{Binding StartupMessageCount}"/>
                 <Label>Warnings</Label>
                 <Label Content="{Binding WarnCount}"/>
                 <Label ToolTip="{Binding FirstError}">Errors</Label>
                 <Label Content="{Binding ErrorCount}" ToolTip="{Binding FirstError}"/>
+                <Button Content="Clear" Command="{Binding ClearErrorStats}" />
             </StackPanel>
             <RichTextBox Name="Log" 
                             DockPanel.Dock="Bottom"

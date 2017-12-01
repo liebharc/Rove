@@ -9,5 +9,7 @@ namespace Rove.Model
         public static SolidColorBrush WarnForeground { get; } = new SolidColorBrush(Colors.Orange);
 
         public static SolidColorBrush ErrorForeground { get; } = new SolidColorBrush(Colors.Red);
+
+        public static SolidColorBrush StartupForeground { get; } = new SolidColorBrush(Colors.Blue);
     }
 }

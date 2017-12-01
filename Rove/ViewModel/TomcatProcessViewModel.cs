@@ -80,6 +80,21 @@ namespace Rove.ViewModel
             }
         }
 
+        private int _startupMessageCount;
+        public int StartupMessageCount
+        {
+            get
+            {
+                return _startupMessageCount;
+            }
+
+            set
+            {
+                _startupMessageCount = value;
+                OnPropertyChanged(nameof(StartupMessageCount));
+            }
+        }
+
         private string _firstError;
         public string FirstError
         {
@@ -146,6 +161,7 @@ namespace Rove.ViewModel
                 ErrorCount = 0;
                 WarnCount = 0;
                 FirstError = string.Empty;
+                StartupMessageCount = 0;
             });
             Config = config;
             ProcessConfig = processConfig;
@@ -272,6 +288,11 @@ namespace Rove.ViewModel
                 {
                     WarnCount++;
                     Write(line, LogColors.WarnForeground);
+                }
+                else if (ProcessConfig.StartupMessage.IsMatch(line))
+                {
+                    StartupMessageCount++;
+                    Write(line, LogColors.StartupForeground);
                 }
                 else
                 {
