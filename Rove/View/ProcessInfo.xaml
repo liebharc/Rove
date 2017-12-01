@@ -22,15 +22,22 @@
             </StackPanel>
             <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Label>Warnings</Label>
-                <Label>0</Label>
-                <Label>Errors</Label>
-                <Label>0</Label>
+                <Label Content="{Binding WarnCount}"/>
+                <Label ToolTip="{Binding FirstError}">Errors</Label>
+                <Label Content="{Binding ErrorCount}" ToolTip="{Binding FirstError}"/>
             </StackPanel>
-            <ScrollViewer DockPanel.Dock="Bottom" >
-                <RichTextBox Name="Log" FontFamily="Courier New" 
-                             PreviewKeyDown="Log_PreviewKeyDown" 
-                             PreviewTextInput="Log_PreviewTextInput"/>
-            </ScrollViewer>
+            <RichTextBox Name="Log" 
+                            DockPanel.Dock="Bottom"
+                            FontFamily="Courier New" 
+                            IsReadOnly="True"
+                            VerticalScrollBarVisibility="Visible"
+                            HorizontalScrollBarVisibility="Visible">
+                <RichTextBox.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <Setter Property="Margin" Value="0" />
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
         </DockPanel>
         <Button Content="Start" Command="{Binding StartProcess}" Visibility="{Binding Path=IsEnabled, Converter={StaticResource ShowOnDisabled}}"
                 HorizontalAlignment="Center" VerticalAlignment="Center"/>

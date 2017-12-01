@@ -32,6 +32,8 @@ namespace Rove.ViewModel
 
         public ICommand OpenLogFile { get; }
 
+        public ICommand ClearErrorStats { get; }
+
         public bool IsDisposed => Tomcat.IsDisposed;
 
         public int Id => Tomcat.Id;
@@ -47,6 +49,51 @@ namespace Rove.ViewModel
         private RichTextBox Logger { get; set; }
 
         private int LineCount { get; set; }
+
+        private int _warnCount;
+        public int WarnCount
+        {
+            get
+            {
+                return _warnCount;
+            }
+
+            set
+            {
+                _warnCount = value;
+                OnPropertyChanged(nameof(WarnCount));
+            }
+        }
+
+        private int _errorCount;
+        public int ErrorCount
+        {
+            get
+            {
+                return _errorCount;
+            }
+
+            set
+            {
+                _errorCount = value;
+                OnPropertyChanged(nameof(ErrorCount));
+            }
+        }
+
+        private string _firstError;
+        public string FirstError
+        {
+            get
+            {
+                return _firstError;
+            }
+
+            set
+            {
+                _firstError = value;
+                OnPropertyChanged(nameof(FirstError));
+            }
+        }
 
         private bool _autoScroll = true;
 
@@ -93,6 +140,12 @@ namespace Rove.ViewModel
                 }
 
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
+            });
+            ClearErrorStats = new LambdaCommand(() =>
+            {
+                ErrorCount = 0;
+                WarnCount = 0;
+                FirstError = string.Empty;
             });
             Config = config;
             ProcessConfig = processConfig;
@@ -206,8 +259,27 @@ namespace Rove.ViewModel
             
             foreach (var line in lines)
             {
+
                 // TODO count warnings and errors, display them and allow the user to clear them. Also check for startup message.s
-                Write(line, LogColors.InfoForeground);
+                if (ProcessConfig.ErrorMessage.IsMatch(line))
+                {
+                    if (ErrorCount == 0)
+                    {
+                        FirstError = line;
+                    }
+                    ErrorCount++;
+                    Write(line, LogColors.ErrorForeground);
+                }
+                else if (ProcessConfig.WarningMessage.IsMatch(line))
+                {
+                    WarnCount++;
+                    Write(line, LogColors.WarnForeground);
+                }
+                else
+                {
+                    Write(line, LogColors.InfoForeground);
+                }
+                    
             }
         }
 
@@ -233,8 +305,6 @@ namespace Rove.ViewModel
                     LineCount--;
                 }
             }
-
-            Logger.AppendText(tr.Text);
 
             if (AutoScroll)
             {

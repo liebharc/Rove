@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Documents;
 
 namespace Rove.View
 {
@@ -39,16 +40,12 @@ namespace Rove.View
         public ProcessInfo()
         {
             InitializeComponent();
+            DisableWordWrapOnLog();
         }
 
-        private void Log_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void DisableWordWrapOnLog()
         {
-            e.Handled = true;
-        }
-
-        private void Log_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
-        {
-            e.Handled = true;
+            Log.Document.PageWidth = 1000;
         }
     }
 }
