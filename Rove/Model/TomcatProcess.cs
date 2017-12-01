@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.ComponentModel;
 using System.IO;
+using System.Management;
 
 namespace Rove.Model
 {
@@ -36,7 +37,14 @@ namespace Rove.Model
             }
 
             Process = process;
-            CommandLineInternal = new Lazy<string>(() => string.Format("select CommandLine from Win32_Process where ProcessID ='{0}'", Process.Id));
+            CommandLineInternal = new Lazy<string>(() => {
+                string wmiQuery = string.Format("select CommandLine from Win32_Process where ProcessID ='{0}'", Process.Id);
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher(wmiQuery);
+                ManagementObjectCollection retObjectCollection = searcher.Get();
+                foreach (ManagementObject retObject in retObjectCollection)
+                    return "" + retObject["CommandLine"];
+                return process.ProcessName;
+            });
         }
 
         public TomcatProcessControl Control()

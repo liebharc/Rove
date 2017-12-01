@@ -179,6 +179,7 @@ namespace Rove.ViewModel
 
             foreach (var line in lines)
             {
+                // TODO count warnings and errors, display them and allow the user to clear them. Also check for startup message.s
                 Log.Add(line);
             }
 

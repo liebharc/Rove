@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Windows.Media;
 using System.Xml.Serialization;
 
 namespace Rove.Model
@@ -22,6 +23,7 @@ namespace Rove.Model
                     ProcessName = "ProcessName",
                     ErrorMessage = ".*ERROR.*",
                     WarningMessage = ".*WARN.*",
+                    StartupMessage = ".*started.*",
                     OnProcessStartedScript = "OnProcessStartedScript.ps1",
                     FindLogFileScript = "FindLogFileScript.ps1",
                     IsKnownProcess= ".*",
@@ -82,6 +84,10 @@ namespace Rove.Model
 
         public string StartProcessScript { get; set; } = string.Empty;
 
+        public string StartupMessage { get; set; } = string.Empty;
+
+        public string Color { get; set; } = string.Empty;
+
         public ProcessConfig ToProcessConfig()
         {
             return new ProcessConfig(this);
@@ -100,10 +106,12 @@ namespace Rove.Model
             ProcessName = ser.ProcessName;
             WarningMessage = Converstions.CompileRegex(nameof(ser.WarningMessage), ser.WarningMessage);
             ErrorMessage = Converstions.CompileRegex(nameof(ser.ErrorMessage), ser.ErrorMessage);
+            StartupMessage = Converstions.CompileRegex(nameof(ser.StartupMessage), ser.StartupMessage);
             OnProcessStartedScript = Converstions.GetOptionalPath(nameof(ser.OnProcessStartedScript), ser.OnProcessStartedScript);
             FindLogFileScript = Converstions.GetMandatoryPath(nameof(ser.FindLogFileScript), ser.FindLogFileScript);
             IsKnownProcess = Converstions.CompileRegex(nameof(ser.IsKnownProcess), ser.IsKnownProcess);
             StartProcessScript = Converstions.GetMandatoryPath(nameof(ser.StartProcessScript), ser.StartProcessScript);
+            Color = Converstions.GetColor(nameof(ser.Color), ser.Color);
         }
 
         public string ProcessName { get;} 
@@ -112,6 +120,8 @@ namespace Rove.Model
 
         public Regex ErrorMessage { get; }
 
+        public Regex StartupMessage { get; }
+
         public FileInfo OnProcessStartedScript { get; }
 
         public FileInfo FindLogFileScript { get; }
@@ -119,6 +129,8 @@ namespace Rove.Model
         public Regex IsKnownProcess { get; }
 
         public FileInfo StartProcessScript { get; }
+
+        public Color Color { get; }
 
     }
 
@@ -159,6 +171,45 @@ namespace Rove.Model
             }
 
             return new FileInfo(path);
+        }
+
+        internal static Color GetColor(string argName, string color)
+        {
+            if (string.IsNullOrEmpty(color))
+            {
+                return Colors.Transparent;
+            }
+
+            if (color.StartsWith("#"))
+            {
+                color = color.Substring(1);
+            }
+            
+            if (color.Length != 6)
+            {
+                throw new ArgumentException(argName);
+            }
+
+            try
+            {
+                byte r = Convert.ToByte(color.Substring(0, 2), 16);
+                byte g = Convert.ToByte(color.Substring(2, 2), 16);
+                byte b = Convert.ToByte(color.Substring(4, 2), 16);
+
+                return Color.FromRgb(r, g, b);
+            }
+            catch (ArgumentException ex)
+            {
+                throw new ArgumentException(argName, ex);
+            }
+            catch (FormatException ex)
+            {
+                throw new ArgumentException(argName, ex);
+            }
+            catch (OverflowException ex)
+            {
+                throw new ArgumentException(argName, ex);
+            }
         }
     }
 
