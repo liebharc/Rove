@@ -19,9 +19,9 @@ namespace Rove.ViewModel
 
         private TailLogFile LogFile { get; set; }
 
-        public OverallConfig Config { get; }
+        private OverallConfig Config { get; }
 
-        public ProcessConfig ProcessConfig { get; }
+        private ProcessConfig ProcessConfig { get; }
 
         public ICommand Close { get; }
 

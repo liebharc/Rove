@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using Rove.Model;
 using System.IO;
+using Xceed.Wpf.AvalonDock.Layout;
 
 namespace Rove.View
 {
@@ -89,58 +90,21 @@ namespace Rove.View
                 (DataContext as TomcatProcessViewModelCollection)?.Dispose(); (DataContext as TomcatProcessViewModelCollection)?.Update();
             }
         }
-
+        
         private void CreateAPanelForEachProcess(IList<TomcatProcessViewModel> processes)
         {
-            const int RowSize = 3;
-            var childCount = processes.Count;
-            int rows = (childCount + RowSize - 1) / RowSize;
-            int columns = Math.Min(3, childCount);
-            SetGridRows(rows);
-            SetGridCols(columns);
-            int i = 0;
             foreach (var process in processes)
             {
                 var panel = new ProcessInfo { DataContext = process };
                 process.Initialize(panel);
-                Grid.SetRow(panel, i / RowSize);
-                Grid.SetColumn(panel, i % RowSize);
-                Grid.Children.Add(panel);
-                i++;
+                Root.Children.Add(
+                    new LayoutDocument
+                    {
+                        Title = process.Title,
+                        Content = panel,
+                        CanClose = false
+                    });
             }
-        }
-
-        private void SetGridRows(int rows)
-        {
-            while (Grid.RowDefinitions.Count < rows)
-            {
-                Grid.RowDefinitions.Add(new RowDefinition());
-            }
-            while (Grid.RowDefinitions.Count > rows)
-            {
-                Grid.RowDefinitions.RemoveAt(0);
-            }
-        }
-
-        private void SetGridCols(int cols)
-        {
-            while (Grid.ColumnDefinitions.Count < cols)
-            {
-                Grid.ColumnDefinitions.Add(new ColumnDefinition());
-            }
-            while (Grid.ColumnDefinitions.Count > cols)
-            {
-                Grid.ColumnDefinitions.RemoveAt(0);
-            }
-        }
-
-        private static IEnumerable<TomcatProcessViewModel> ToGenericList(System.Collections.IList list)
-        {
-            if (list == null)
-            {
-                return new List<TomcatProcessViewModel>();
-            }
-            return list.Cast<TomcatProcessViewModel>();
         }
     }
 }

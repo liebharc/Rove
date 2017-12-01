@@ -15,7 +15,6 @@
                 <StackPanel.Resources>
                     <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
                 </StackPanel.Resources>
-                <Label Content="{Binding Title}"/>
                 <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" />
                 <Button Command="{Binding OpenLogFile}">Open Log ...</Button>
                 <Button Command="{Binding Close}">x</Button>

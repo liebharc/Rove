@@ -3,8 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
-    <Grid Name="Grid" >
-    </Grid>
+    <xcad:DockingManager AllowMixedOrientation="True">
+        <xcad:DockingManager.Theme>
+            <xcad:VS2010Theme />
+        </xcad:DockingManager.Theme>
+        <xcad:LayoutRoot>
+        <xcad:LayoutPanel Orientation="Horizontal">
+            <xcad:LayoutDocumentPaneGroup >
+                    <xcad:LayoutDocumentPane x:Name="Root"/>
+                </xcad:LayoutDocumentPaneGroup >
+        </xcad:LayoutPanel>
+        </xcad:LayoutRoot>
+    </xcad:DockingManager>
 </Window>
