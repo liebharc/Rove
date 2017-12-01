@@ -45,7 +45,7 @@
             </Grid>
             <RichTextBox Name="Log" 
                             DockPanel.Dock="Bottom"
-                            FontFamily="Courier New" 
+                            FontFamily="Consolas" 
                             IsReadOnly="True"
                             VerticalScrollBarVisibility="Visible"
                             HorizontalScrollBarVisibility="Visible">
