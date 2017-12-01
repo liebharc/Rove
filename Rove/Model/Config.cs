@@ -15,7 +15,8 @@ namespace Rove.Model
                 var config = new OverallConfigSerialize
                 {
                     OnNewProcessScript = "StartupScript.ps1",
-                    LogHistory = 10000
+                    LogHistory = 10000,
+                    DisplayLayout = string.Empty
                 };
 
                 var process = new ProcessConfigSerialize
@@ -35,6 +36,8 @@ namespace Rove.Model
             }
         }
 
+        public string DisplayLayout { get; set; } = string.Empty;
+
         public string OnNewProcessScript { get; set; } = string.Empty;
 
         public List<ProcessConfigSerialize> ProcessConfigs { get; } = new List<ProcessConfigSerialize>();
@@ -52,6 +55,7 @@ namespace Rove.Model
         public OverallConfig(OverallConfigSerialize ser)
         {
             OnNewProcessScript = Converstions.GetOptionalPath(nameof(ser.OnNewProcessScript), ser.OnNewProcessScript);
+            DisplayLayout = ser.DisplayLayout;
             LogHistory = ser.LogHistory;
             if (LogHistory < 0)
             {
@@ -64,6 +68,7 @@ namespace Rove.Model
             }
         }
 
+        public string DisplayLayout { get; }
         public FileInfo OnNewProcessScript { get; }
         public int LogHistory { get; }
         public List<ProcessConfig> ProcessConfigs { get; } = new List<ProcessConfig>();

@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using Rove.Model;
 using System.IO;
 using Xceed.Wpf.AvalonDock.Layout;
+using System.Xml;
+using Xceed.Wpf.AvalonDock.Layout.Serialization;
 
 namespace Rove.View
 {
@@ -15,21 +17,35 @@ namespace Rove.View
     {
         private static void CreateDefaultConfigFile()
         {
-            var defaultConfig = ConfigSerializer.ConfigToText(OverallConfigSerialize.DefaultConfig);
-            var file= typeof(MainWindow).Assembly.Location.Replace(".exe", "") + "Default.xml";
+            WriteConfigFile(OverallConfigSerialize.DefaultConfig, GetLogBaseName() + "Default.xml");
+        }
+
+        private static void WriteConfigFile(OverallConfigSerialize config, string file)
+        {
+            var defaultConfig = ConfigSerializer.ConfigToText(config);
             File.WriteAllText(file, defaultConfig);
         }
 
-        private static OverallConfig LoadConfig()
+        private static string GetLogBaseName()
         {
-            var file = typeof(MainWindow).Assembly.Location.Replace(".exe", "") + ".xml";
+            return typeof(MainWindow).Assembly.Location.Replace(".exe", "");
+        }
+
+        private static string GetLogName()
+        {
+            return GetLogBaseName() + ".xml";
+        }
+
+        private static OverallConfigSerialize LoadConfig()
+        {
+            var file = GetLogName();
             if (!File.Exists(file))
             {
-                return OverallConfigSerialize.DefaultConfig.ToOverallConfig();
+                return OverallConfigSerialize.DefaultConfig;
             }
 
             var content = File.ReadAllText(file);
-            return ConfigSerializer.TextToConfig(content).ToOverallConfig();
+            return ConfigSerializer.TextToConfig(content);
         }
 
         private DispatcherTimer Timer { get; } = new DispatcherTimer();
@@ -38,6 +54,8 @@ namespace Rove.View
 
         private bool IsDisposed { get; set; } = false;
 
+        private OverallConfigSerialize LastConfig { get; }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -45,7 +63,8 @@ namespace Rove.View
             try
             {
                 CreateDefaultConfigFile();
-                config = LoadConfig();
+                LastConfig = LoadConfig();
+                config = LastConfig.ToOverallConfig();
             }
             catch (ArgumentException ex)
             {
@@ -89,8 +108,10 @@ namespace Rove.View
                 Timer.Stop();
                 (DataContext as TomcatProcessViewModelCollection)?.Dispose(); (DataContext as TomcatProcessViewModelCollection)?.Update();
             }
+
+            SaveLayout();
         }
-        
+
         private void CreateAPanelForEachProcess(IList<TomcatProcessViewModel> processes)
         {
             foreach (var process in processes)
@@ -102,8 +123,48 @@ namespace Rove.View
                     {
                         Title = process.Title,
                         Content = panel,
-                        CanClose = false
+                        CanClose = false,
+                        ContentId = process.Title
                     });
+            }
+
+            RestoreLayout();
+        }
+
+        private void SaveLayout()
+        {
+            try
+            {
+                using (StringWriter writer = new StringWriter())
+                {
+                    XmlLayoutSerializer xmlLayout = new XmlLayoutSerializer(Layout);
+                    xmlLayout.Serialize(writer);
+                    LastConfig.DisplayLayout = writer.ToString();
+                    WriteConfigFile(LastConfig, GetLogName());
+                }
+            }
+            catch (Exception ex)
+            {
+                Result.Error("Failed to save display configuration: " + ex.Message).Report();
+            }
+        }
+
+        private void RestoreLayout()
+        {
+            if (!string.IsNullOrEmpty(LastConfig.DisplayLayout))
+            {
+                try
+                {
+                    using (StringReader reader = new StringReader(LastConfig.DisplayLayout))
+                    {
+                        XmlLayoutSerializer xmlLayout = new XmlLayoutSerializer(Layout);
+                        xmlLayout.Deserialize(reader);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Result.Error("Failed to load display configuration: " + ex.Message).Report();
+                }
             }
         }
     }

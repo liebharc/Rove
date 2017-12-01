@@ -6,16 +6,16 @@
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
-    <xcad:DockingManager AllowMixedOrientation="True">
+    <xcad:DockingManager AllowMixedOrientation="True" x:Name="Layout">
         <xcad:DockingManager.Theme>
             <xcad:VS2010Theme />
         </xcad:DockingManager.Theme>
         <xcad:LayoutRoot>
-        <xcad:LayoutPanel Orientation="Horizontal">
-            <xcad:LayoutDocumentPaneGroup >
-                    <xcad:LayoutDocumentPane x:Name="Root"/>
+            <xcad:LayoutPanel Orientation="Horizontal">
+                <xcad:LayoutDocumentPaneGroup>
+                    <xcad:LayoutDocumentPane x:Name="Root" />
                 </xcad:LayoutDocumentPaneGroup >
-        </xcad:LayoutPanel>
+            </xcad:LayoutPanel>
         </xcad:LayoutRoot>
     </xcad:DockingManager>
 </Window>
