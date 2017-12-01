@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:Rove.View"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
+    <Grid Background="{Binding Color}">
         <Grid.Resources>
             <local:ShowOnDisabledConverter x:Key="ShowOnDisabled"/>
         </Grid.Resources>
@@ -20,15 +20,24 @@
                 <Button Command="{Binding OpenLogFile}">Open Log ...</Button>
                 <Button Command="{Binding Close}">x</Button>
             </StackPanel>
-            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Label>Startup</Label>
-                <Label Content="{Binding StartupMessageCount}"/>
-                <Label>Warnings</Label>
-                <Label Content="{Binding WarnCount}"/>
-                <Label ToolTip="{Binding FirstError}">Errors</Label>
-                <Label Content="{Binding ErrorCount}" ToolTip="{Binding FirstError}"/>
-                <Button Content="Clear" Command="{Binding ClearErrorStats}" />
-            </StackPanel>
+            <Grid DockPanel.Dock="Bottom" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <CheckBox Grid.Column="0" Content="Follow Tail" IsChecked="{Binding AutoScroll}" />
+
+                <StackPanel Orientation="Horizontal" Grid.Column="2">
+                    <Label>Startup</Label>
+                    <Label Content="{Binding StartupMessageCount}"/>
+                    <Label>Warnings</Label>
+                    <Label Content="{Binding WarnCount}"/>
+                    <Label ToolTip="{Binding FirstError}">Errors</Label>
+                    <Label Content="{Binding ErrorCount}" ToolTip="{Binding FirstError}"/>
+                    <Button Content="Clear" Command="{Binding ClearErrorStats}" />
+                </StackPanel>
+            </Grid>
             <RichTextBox Name="Log" 
                             DockPanel.Dock="Bottom"
                             FontFamily="Courier New" 

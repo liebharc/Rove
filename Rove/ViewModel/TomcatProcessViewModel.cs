@@ -40,6 +40,8 @@ namespace Rove.ViewModel
 
         public bool IsVisible { get; private set; } = false;
 
+        public SolidColorBrush Color { get; }
+
         public bool IsEnabled => Tomcat != null && !Tomcat.IsDisposed;
 
         public string Title => ProcessConfig.ProcessName;
@@ -165,6 +167,10 @@ namespace Rove.ViewModel
             });
             Config = config;
             ProcessConfig = processConfig;
+            if (processConfig.Color != null)
+            {
+                Color = new SolidColorBrush(processConfig.Color);
+            }
         }
 
         public void Dispose()

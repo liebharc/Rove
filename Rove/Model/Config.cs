@@ -38,7 +38,8 @@ namespace Rove.Model
         public string OnNewProcessScript { get; set; } = string.Empty;
 
         public List<ProcessConfigSerialize> ProcessConfigs { get; } = new List<ProcessConfigSerialize>();
-        public int LogHistory { get; set; } = 10000;
+
+        public int LogHistory { get; set; } = 1000;
 
         public OverallConfig ToOverallConfig()
         {
