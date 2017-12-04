@@ -7,6 +7,18 @@ using System.Xml.Serialization;
 
 namespace Rove.Model
 {
+    public class ConfigException : Exception
+    {
+        public ConfigException(string section, string value, Exception innerException = null) : base("Configuration failure in section " + section + " for value " + value, innerException)
+        {
+            Section = section;
+            Value = value;
+        }
+
+        public string Section { get; }
+        public string Value { get; }
+    }
+
     public class OverallConfigSerialize
     {
         public static OverallConfigSerialize DefaultConfig { 
@@ -54,12 +66,12 @@ namespace Rove.Model
     {
         public OverallConfig(OverallConfigSerialize ser)
         {
-            OnNewProcessScript = Converstions.GetOptionalPath(nameof(ser.OnNewProcessScript), ser.OnNewProcessScript);
+            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfigSerialize), nameof(ser.OnNewProcessScript), ser.OnNewProcessScript);
             DisplayLayout = ser.DisplayLayout;
             LogHistory = ser.LogHistory;
             if (LogHistory < 0)
             {
-                throw new ArgumentException(nameof(LogHistory));
+                throw new ConfigException(nameof(OverallConfigSerialize), nameof(LogHistory));
             }
 
             foreach (var s in ser.ProcessConfigs)
@@ -106,18 +118,18 @@ namespace Rove.Model
         {
             if (string.IsNullOrEmpty(ser.ProcessName))
             {
-                throw new ArgumentException(nameof(ser.ProcessName));
+                throw new ArgumentException("Unnamed section", nameof(ser.ProcessName));
             }
 
             ProcessName = ser.ProcessName;
-            WarningMessage = Converstions.CompileRegex(nameof(ser.WarningMessage), ser.WarningMessage);
-            ErrorMessage = Converstions.CompileRegex(nameof(ser.ErrorMessage), ser.ErrorMessage);
-            StartupMessage = Converstions.CompileRegex(nameof(ser.StartupMessage), ser.StartupMessage);
-            OnProcessStartedScript = Converstions.GetOptionalPath(nameof(ser.OnProcessStartedScript), ser.OnProcessStartedScript);
-            FindLogFileScript = Converstions.GetMandatoryPath(nameof(ser.FindLogFileScript), ser.FindLogFileScript);
-            IsKnownProcess = Converstions.CompileRegex(nameof(ser.IsKnownProcess), ser.IsKnownProcess);
-            StartProcessScript = Converstions.GetMandatoryPath(nameof(ser.StartProcessScript), ser.StartProcessScript);
-            Color = Converstions.GetColor(nameof(ser.Color), ser.Color);
+            WarningMessage = Converstions.CompileRegex(ser.ProcessName, nameof(ser.WarningMessage), ser.WarningMessage);
+            ErrorMessage = Converstions.CompileRegex(ser.ProcessName, nameof(ser.ErrorMessage), ser.ErrorMessage);
+            StartupMessage = Converstions.CompileRegex(ser.ProcessName, nameof(ser.StartupMessage), ser.StartupMessage);
+            OnProcessStartedScript = Converstions.GetOptionalPath(ser.ProcessName, nameof(ser.OnProcessStartedScript), ser.OnProcessStartedScript);
+            FindLogFileScript = Converstions.GetMandatoryPath(ser.ProcessName, nameof(ser.FindLogFileScript), ser.FindLogFileScript);
+            IsKnownProcess = Converstions.CompileRegex(ser.ProcessName, nameof(ser.IsKnownProcess), ser.IsKnownProcess);
+            StartProcessScript = Converstions.GetMandatoryPath(ser.ProcessName, nameof(ser.StartProcessScript), ser.StartProcessScript);
+            Color = Converstions.GetColor(ser.ProcessName, nameof(ser.Color), ser.Color);
         }
 
         public string ProcessName { get;} 
@@ -142,44 +154,44 @@ namespace Rove.Model
 
     public static class Converstions
     {
-        public static Regex CompileRegex(string argName, string regex)
+        public static Regex CompileRegex(string section, string argName, string regex)
         {
             try
             {
                 return new Regex(regex);
             }
-            catch (Exception)
+            catch (ArgumentException ex)
             {
-                throw new ArgumentException(argName);
+                throw new ConfigException(section, argName, ex);
             }
         }
 
-        public static FileInfo GetOptionalPath(string argName, string path)
+        public static FileInfo GetOptionalPath(string section, string argName, string path)
         {
             if (string.IsNullOrEmpty(path))
             {
                 return null;
             }
 
-            return GetMandatoryPath(argName, path);
+            return GetMandatoryPath(section, argName, path);
         }
 
-        public static FileInfo GetMandatoryPath(string argName, string path)
+        public static FileInfo GetMandatoryPath(string section, string argName, string path)
         {
             if (string.IsNullOrEmpty(path))
             {
-                throw new ArgumentException(argName);
+                throw new ConfigException(section, argName);
             }
 
             if (!File.Exists(path))
             {
-                throw new ArgumentException(argName);
+                throw new ConfigException(section, argName);
             }
 
             return new FileInfo(path);
         }
 
-        internal static Color GetColor(string argName, string color)
+        internal static Color GetColor(string section, string argName, string color)
         {
             try
             {
@@ -187,7 +199,7 @@ namespace Rove.Model
             }
             catch (NotSupportedException ex)
             {
-                throw new ArgumentException(argName, ex);
+                throw new ConfigException(section, argName, ex);
             }
         }
     }

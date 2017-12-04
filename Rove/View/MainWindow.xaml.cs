@@ -82,11 +82,6 @@ namespace Rove.View
                 LastConfig = LoadConfig();
                 config = LastConfig.ToOverallConfig();
             }
-            catch (ArgumentException ex)
-            {
-                Result.Error("Error with configuration: " + ex.Message).Report();
-                Environment.Exit(0);
-            }
             catch (Exception ex)
             {
                 Result.Error(ex.Message).Report();
