@@ -13,7 +13,7 @@ namespace Rove.Model
 
         public volatile bool _isActive = true;
 
-        public event Action<IEnumerable<string>> NewMessagesArrived;
+        public event Action<bool, List<string>> NewMessagesArrived;
 
         public TailLogFile(FileInfo file)
         {
@@ -41,6 +41,7 @@ namespace Rove.Model
             using (StreamReader reader = new StreamReader(new FileStream(File.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
                 long lastMaxOffset = reader.BaseStream.Length;
+                bool isNewTailSession = true;
                 while (_isActive)
                 {
                     if (reader.BaseStream.Length != lastMaxOffset)
@@ -54,19 +55,20 @@ namespace Rove.Model
                         }
 
                         lastMaxOffset = reader.BaseStream.Position;
-                        NewMessagesArrived?.Invoke(lines);
+                        NewMessagesArrived?.Invoke(isNewTailSession, lines);
+                        isNewTailSession = false;
                     }
 
-                    Thread.Sleep(100);
+                    Thread.Sleep(TimeSpan.FromMilliseconds(100));
                 }
             }
         }
 
         public void Dispose()
         {
+            _isActive = false;
             if (Reader != null)
             {
-                _isActive = false;
                 Reader.Join();
                 Reader = null;
             }

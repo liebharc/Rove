@@ -1,13 +1,12 @@
 ﻿using Rove.Model;
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 
 namespace Rove.ViewModel
 {
     public sealed class TomcatProcessViewModelCollection : IDisposable
     {
-        public ObservableCollection<TomcatProcessViewModel> Processes { get; } 
-            = new ObservableCollection<TomcatProcessViewModel>();
+        public List<TomcatProcessViewModel> Processes { get; } = new List<TomcatProcessViewModel>();
 
         public TomcatProcessViewModelCollection(OverallConfig config)
         {

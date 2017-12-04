@@ -208,7 +208,18 @@ namespace Rove.Model
         private static Process FindPidFromIndexedProcessName(string indexedProcessName)
         {
             var parentId = new PerformanceCounter("Process", "Creating Process ID", indexedProcessName);
-            return Process.GetProcessById((int)parentId.NextValue());
+            try
+            {
+                return Process.GetProcessById((int)parentId.NextValue());
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+            catch (InvalidOperationException)
+            {
+                return null;
+            }
         }
 
         public static Process Parent(this Process process)

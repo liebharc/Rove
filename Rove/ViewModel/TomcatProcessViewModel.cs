@@ -10,12 +10,15 @@ using Rove.View;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace Rove.ViewModel
 {
     public sealed class TomcatProcessViewModel : IDisposable, INotifyPropertyChanged
     {
         private TomcatProcessControl Tomcat { get; set; }
+
+        private object TomcatLock { get; } = new object();
 
         private TailLogFile LogFile { get; set; }
 
@@ -190,23 +193,26 @@ namespace Rove.ViewModel
 
         public void Update(IEnumerable<TomcatProcessInfo> tomcats)
         {
-            if (Tomcat == null)
+            lock (TomcatLock)
             {
-                Tomcat = tomcats
-                    .FirstOrDefault(t => ProcessConfig.IsKnownProcess.IsMatch(t.CommandLine))
-                    ?.Control();
-                if (Tomcat != null)
+                if (Tomcat == null)
                 {
-                    OnNewTomcat();
+                    Tomcat = tomcats
+                        .FirstOrDefault(t => ProcessConfig.IsKnownProcess.IsMatch(t.CommandLine))
+                        ?.Control();
+                    if (Tomcat != null)
+                    {
+                        OnNewTomcat();
+                        IsVisible = false;
+                        OnTomcatChanged();
+                    }
+                }
+                else if (Tomcat.IsDisposed)
+                {
+                    Tomcat = null;
                     IsVisible = false;
                     OnTomcatChanged();
                 }
-            }
-            else if (Tomcat.IsDisposed)
-            {
-                Tomcat = null;
-                IsVisible = false;
-                OnTomcatChanged();
             }
         }
 
@@ -241,11 +247,11 @@ namespace Rove.ViewModel
             }
             else if (logResult.StdOut.Count == 0)
             {
-                Result.Error(ProcessConfig.FindLogFileScript + " returned no result");
+                Result.Error(ProcessConfig.FindLogFileScript + " returned no result").Report();
             }
             else if (logResult.StdOut.Count > 1)
             {
-                Result.Error(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut));
+                Result.Error(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut)).Report();
             }
             else
             {
@@ -260,24 +266,28 @@ namespace Rove.ViewModel
                     }
                     else
                     {
-                        Result.Error(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file);
+                        Result.Error(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file).Report();
                     }
                 }
                 catch (Exception ex)
                 {
-                    Result.Error(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file + " error was " + ex.Message);
+                    Result.Error(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file + " error was " + ex.Message).Report();
                 }
             }
         }
 
-        private void LogFile_NewMessagesArrived(IEnumerable<string> lines)
+        private void LogFile_NewMessagesArrived(bool isNewTailSession, List<string> lines)
         {
-            if (!Logger.Dispatcher.CheckAccess())
+            Logger.Dispatcher.Invoke(() => WriteLines(isNewTailSession, lines));
+        }
+
+        private void WriteLines(bool isNewTailSession, List<string> lines)
+        {
+            if (isNewTailSession)
             {
-                Logger.Dispatcher.InvokeAsync(() => LogFile_NewMessagesArrived(lines));
-                return;
+                ClearLogWindow();
             }
-            
+
             foreach (var line in lines)
             {
                 if (ProcessConfig.ErrorMessage.IsMatch(line))
@@ -303,17 +313,11 @@ namespace Rove.ViewModel
                 {
                     Write(line, LogColors.InfoForeground);
                 }
-                    
             }
         }
 
         private void Write(string logMessage, SolidColorBrush foreground)
         {
-            if (Logger == null)
-            {
-                return;
-            }
-
             var tr = new TextRange(Logger.Document.ContentEnd, Logger.Document.ContentEnd);
             tr.Text = logMessage + "\n";
             tr.ApplyPropertyValue(TextElement.ForegroundProperty, foreground);
@@ -333,6 +337,11 @@ namespace Rove.ViewModel
             {
                 Logger.ScrollToEnd();
             }
+        }
+
+        private void ClearLogWindow()
+        {
+            new TextRange(Logger.Document.ContentStart, Logger.Document.ContentEnd).Text = string.Empty;
         }
 
         private static string QuoteSingle(string text)

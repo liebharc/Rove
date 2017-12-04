@@ -9,6 +9,7 @@ using Xceed.Wpf.AvalonDock.Layout;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
 using System.Windows.Data;
 using System.Globalization;
+using System.Threading;
 
 namespace Rove.View
 {
@@ -61,9 +62,11 @@ namespace Rove.View
             return ConfigSerializer.TextToConfig(content);
         }
 
-        private DispatcherTimer Timer { get; } = new DispatcherTimer();
+        private object UpdateThreadLock { get; } = new object();
 
-        private object TImerLock { get; } = new object();
+        private Thread UpdateThread { get; }
+
+        private volatile bool _isTimerActive = true;
 
         private bool IsDisposed { get; set; } = false;
 
@@ -95,34 +98,35 @@ namespace Rove.View
             DataContext = viewModel;
             Closed += MainWindow_Closed;
 
-            Timer.Interval = TimeSpan.FromSeconds(0.1);
-            Timer.Tick += Timer_Tick;
-            Timer.Start();
+            UpdateThread = new Thread((_) => Update(viewModel));
+            UpdateThread.Start();
         }
 
-        private void Timer_Tick(object sender, EventArgs e)
+        private void Update(TomcatProcessViewModelCollection viewModel)
         {
-            lock (TImerLock)
+            while (_isTimerActive)
             {
-                if (IsDisposed)
+                lock (UpdateThreadLock)
                 {
-                    return;
+                    viewModel.Update();
+                }
+            }
+        }
+
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            if (!IsDisposed)
+            {
+                lock (UpdateThreadLock)
+                {
+                    (DataContext as IDisposable)?.Dispose();
+                    _isTimerActive = false;
                 }
 
-                (DataContext as TomcatProcessViewModelCollection)?.Update();
-            }
-        }
-
-        private void MainWindow_Closed(object sender, System.EventArgs e)
-        {
-            lock (TImerLock)
-            {
+                UpdateThread.Join();
+                SaveLayout();
                 IsDisposed = true;
-                Timer.Stop();
-                (DataContext as TomcatProcessViewModelCollection)?.Dispose(); (DataContext as TomcatProcessViewModelCollection)?.Update();
             }
-
-            SaveLayout();
         }
 
         private void CreateAPanelForEachProcess(IList<TomcatProcessViewModel> processes)

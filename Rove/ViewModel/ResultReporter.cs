@@ -12,6 +12,12 @@ namespace Rove.ViewModel
                 return;
             }
 
+            if (!Application.Current.Dispatcher.CheckAccess())
+            {
+                Application.Current.Dispatcher.Invoke(() => Report(result));
+                return;
+            }
+
             MessageBox.Show(result.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
