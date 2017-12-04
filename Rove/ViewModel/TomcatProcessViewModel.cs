@@ -22,9 +22,9 @@ namespace Rove.ViewModel
 
         private TailLogFile LogFile { get; set; }
 
-        private OverallConfig Config { get; }
+        private OverallConfigChecked Config { get; }
 
-        private ProcessConfig ProcessConfig { get; }
+        private ProcessConfigChecked ProcessConfig { get; }
 
         public ICommand Close { get; }
 
@@ -130,7 +130,7 @@ namespace Rove.ViewModel
             }
         }
 
-        public TomcatProcessViewModel(OverallConfig config, ProcessConfig processConfig)
+        public TomcatProcessViewModel(OverallConfigChecked config, ProcessConfigChecked processConfig)
         {
             if (config == null)
             {

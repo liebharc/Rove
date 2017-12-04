@@ -19,19 +19,19 @@ namespace Rove.Model
         public string Value { get; }
     }
 
-    public class OverallConfigSerialize
+    public class OverallConfig
     {
-        public static OverallConfigSerialize DefaultConfig { 
+        public static OverallConfig DefaultConfig { 
             get
             {
-                var config = new OverallConfigSerialize
+                var config = new OverallConfig
                 {
                     OnNewProcessScript = "StartupScript.ps1",
                     LogHistory = 10000,
                     DisplayLayout = string.Empty
                 };
 
-                var process = new ProcessConfigSerialize
+                var process = new ProcessConfig
                 {
                     ProcessName = "ProcessName",
                     ErrorMessage = ".*ERROR.*",
@@ -52,26 +52,26 @@ namespace Rove.Model
 
         public string OnNewProcessScript { get; set; } = string.Empty;
 
-        public List<ProcessConfigSerialize> ProcessConfigs { get; } = new List<ProcessConfigSerialize>();
+        public List<ProcessConfig> ProcessConfigs { get; } = new List<ProcessConfig>();
 
         public int LogHistory { get; set; } = 1000;
 
-        public OverallConfig ToOverallConfig()
+        public OverallConfigChecked ToOverallConfig()
         {
-            return new OverallConfig(this);
+            return new OverallConfigChecked(this);
         }
     }
 
-    public class OverallConfig
+    public class OverallConfigChecked
     {
-        public OverallConfig(OverallConfigSerialize ser)
+        public OverallConfigChecked(OverallConfig ser)
         {
-            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfigSerialize), nameof(ser.OnNewProcessScript), ser.OnNewProcessScript);
+            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(ser.OnNewProcessScript), ser.OnNewProcessScript);
             DisplayLayout = ser.DisplayLayout;
             LogHistory = ser.LogHistory;
             if (LogHistory < 0)
             {
-                throw new ConfigException(nameof(OverallConfigSerialize), nameof(LogHistory));
+                throw new ConfigException(nameof(OverallConfig), nameof(LogHistory));
             }
 
             foreach (var s in ser.ProcessConfigs)
@@ -83,10 +83,10 @@ namespace Rove.Model
         public string DisplayLayout { get; }
         public FileInfo OnNewProcessScript { get; }
         public int LogHistory { get; }
-        public List<ProcessConfig> ProcessConfigs { get; } = new List<ProcessConfig>();
+        public List<ProcessConfigChecked> ProcessConfigs { get; } = new List<ProcessConfigChecked>();
     }
 
-    public class ProcessConfigSerialize
+    public class ProcessConfig
     {
         public string ProcessName { get; set; } = string.Empty;
 
@@ -106,15 +106,15 @@ namespace Rove.Model
 
         public string Color { get; set; } = string.Empty;
 
-        public ProcessConfig ToProcessConfig()
+        public ProcessConfigChecked ToProcessConfig()
         {
-            return new ProcessConfig(this);
+            return new ProcessConfigChecked(this);
         }
     }
 
-    public class ProcessConfig
+    public class ProcessConfigChecked
     {
-        public ProcessConfig(ProcessConfigSerialize ser)
+        public ProcessConfigChecked(ProcessConfig ser)
         {
             if (string.IsNullOrEmpty(ser.ProcessName))
             {
@@ -206,9 +206,9 @@ namespace Rove.Model
 
     public static class ConfigSerializer
     {
-        public static string ConfigToText(OverallConfigSerialize config)
+        public static string ConfigToText(OverallConfig config)
         {
-            XmlSerializer xml = new XmlSerializer(typeof(OverallConfigSerialize));
+            XmlSerializer xml = new XmlSerializer(typeof(OverallConfig));
             using (StringWriter stringWriter = new StringWriter())
             {
                 xml.Serialize(stringWriter, config);
@@ -216,12 +216,12 @@ namespace Rove.Model
             }
         }
 
-        public static OverallConfigSerialize TextToConfig(string config)
+        public static OverallConfig TextToConfig(string config)
         {
-            XmlSerializer xml = new XmlSerializer(typeof(OverallConfigSerialize));
+            XmlSerializer xml = new XmlSerializer(typeof(OverallConfig));
             using (StringReader stringReader = new StringReader(config))
             {
-                return (OverallConfigSerialize)xml.Deserialize(stringReader);
+                return (OverallConfig)xml.Deserialize(stringReader);
             }
         }
     }

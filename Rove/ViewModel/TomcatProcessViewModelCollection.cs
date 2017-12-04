@@ -8,7 +8,7 @@ namespace Rove.ViewModel
     {
         public List<TomcatProcessViewModel> Processes { get; } = new List<TomcatProcessViewModel>();
 
-        public TomcatProcessViewModelCollection(OverallConfig config)
+        public TomcatProcessViewModelCollection(OverallConfigChecked config)
         {
             if (config == null)
             {

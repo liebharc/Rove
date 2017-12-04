@@ -31,10 +31,10 @@ namespace Rove.View
     {
         private static void CreateDefaultConfigFile()
         {
-            WriteConfigFile(OverallConfigSerialize.DefaultConfig, GetLogBaseName() + "Default.xml");
+            WriteConfigFile(OverallConfig.DefaultConfig, GetLogBaseName() + "Default.xml");
         }
 
-        private static void WriteConfigFile(OverallConfigSerialize config, string file)
+        private static void WriteConfigFile(OverallConfig config, string file)
         {
             var defaultConfig = ConfigSerializer.ConfigToText(config);
             File.WriteAllText(file, defaultConfig);
@@ -50,12 +50,12 @@ namespace Rove.View
             return GetLogBaseName() + ".xml";
         }
 
-        private static OverallConfigSerialize LoadConfig()
+        private static OverallConfig LoadConfig()
         {
             var file = GetLogName();
             if (!File.Exists(file))
             {
-                return OverallConfigSerialize.DefaultConfig;
+                return OverallConfig.DefaultConfig;
             }
 
             var content = File.ReadAllText(file);
@@ -70,12 +70,12 @@ namespace Rove.View
 
         private bool IsDisposed { get; set; } = false;
 
-        private OverallConfigSerialize LastConfig { get; }
+        private OverallConfig LastConfig { get; }
 
         public MainWindow()
         {
             InitializeComponent();
-            OverallConfig config = null;
+            OverallConfigChecked config = null;
             try
             {
                 CreateDefaultConfigFile();
