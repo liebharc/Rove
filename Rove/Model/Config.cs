@@ -26,7 +26,7 @@ namespace Rove.Model
             {
                 var config = new OverallConfig
                 {
-                    OnNewProcessScript = "StartupScript.ps1",
+                    OnAnyProcessStartedScript = "StartupScript.ps1",
                     LogHistory = 10000,
                     DisplayLayout = string.Empty
                 };
@@ -50,7 +50,7 @@ namespace Rove.Model
 
         public string DisplayLayout { get; set; } = string.Empty;
 
-        public string OnNewProcessScript { get; set; } = string.Empty;
+        public string OnAnyProcessStartedScript { get; set; } = string.Empty;
 
         public List<ProcessConfig> ProcessConfigs { get; } = new List<ProcessConfig>();
 
@@ -66,7 +66,7 @@ namespace Rove.Model
     {
         public OverallConfigChecked(OverallConfig ser)
         {
-            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(ser.OnNewProcessScript), ser.OnNewProcessScript);
+            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(ser.OnAnyProcessStartedScript), ser.OnAnyProcessStartedScript);
             DisplayLayout = ser.DisplayLayout;
             LogHistory = ser.LogHistory;
             if (LogHistory < 0)
