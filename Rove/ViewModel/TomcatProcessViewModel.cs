@@ -162,10 +162,7 @@ namespace Rove.ViewModel
             });
             ClearErrorStats = new LambdaCommand(() =>
             {
-                ErrorCount = 0;
-                WarnCount = 0;
-                FirstError = string.Empty;
-                StartupMessageCount = 0;
+                ClearErrorStatistics();
             });
             Config = config;
             ProcessConfig = processConfig;
@@ -173,6 +170,14 @@ namespace Rove.ViewModel
             {
                 Color = new SolidColorBrush(processConfig.Color);
             }
+        }
+
+        private void ClearErrorStatistics()
+        {
+            ErrorCount = 0;
+            WarnCount = 0;
+            FirstError = string.Empty;
+            StartupMessageCount = 0;
         }
 
         public void Dispose()
@@ -286,6 +291,7 @@ namespace Rove.ViewModel
             if (isNewTailSession)
             {
                 ClearLogWindow();
+                ClearErrorStatistics();
             }
 
             foreach (var line in lines)
