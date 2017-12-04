@@ -272,9 +272,9 @@ namespace Rove.ViewModel
 
         private void LogFile_NewMessagesArrived(IEnumerable<string> lines)
         {
-            if (!Application.Current.Dispatcher.CheckAccess())
+            if (!Logger.Dispatcher.CheckAccess())
             {
-                Application.Current.Dispatcher.Invoke(() => LogFile_NewMessagesArrived(lines));
+                Logger.Dispatcher.InvokeAsync(() => LogFile_NewMessagesArrived(lines));
                 return;
             }
             

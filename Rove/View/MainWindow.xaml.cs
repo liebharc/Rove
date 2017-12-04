@@ -1,18 +1,31 @@
 ﻿using Rove.ViewModel;
 using System.Windows;
-using System.Linq;
-using System.Windows.Controls;
 using System.Windows.Threading;
 using System;
 using System.Collections.Generic;
 using Rove.Model;
 using System.IO;
 using Xceed.Wpf.AvalonDock.Layout;
-using System.Xml;
 using Xceed.Wpf.AvalonDock.Layout.Serialization;
+using System.Windows.Data;
+using System.Globalization;
 
 namespace Rove.View
 {
+    public class IsRunningToFontWeightConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var isRunning = value as bool?;
+            return isRunning == true ? FontWeights.Bold : FontWeights.Normal;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public partial class MainWindow : Window
     {
         private static void CreateDefaultConfigFile()
