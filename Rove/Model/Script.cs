@@ -42,14 +42,14 @@ namespace Rove.Model
 
             public Result Check()
             {
-                if (ExitCode != 0)
-                {
-                    return Result.Error("Process exited with " + ExitCode);
-                }
-
                 if (StdErr.Count != 0)
                 {
                     return Result.Error("Process has written errors:\n" + string.Join("\n", StdErr));
+                }
+
+                if (ExitCode != 0)
+                {
+                    return Result.Error("Process exited with " + ExitCode);
                 }
 
                 return Result.Success;
