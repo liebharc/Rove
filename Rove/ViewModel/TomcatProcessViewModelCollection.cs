@@ -1,6 +1,7 @@
 ﻿using Rove.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Rove.ViewModel
 {
@@ -31,7 +32,8 @@ namespace Rove.ViewModel
 
         internal void Update()
         {
-            var tomcats = TomcatProcessInfo.RunningTomcatProcesses;
+            var capturedIds = Processes.Select(p => p.Id).ToList();
+            var tomcats = TomcatProcessInfo.RunningTomcatProcesses(capturedIds);
             foreach (var process in Processes)
             {
                 process.Update(tomcats);

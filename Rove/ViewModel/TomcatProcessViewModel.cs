@@ -63,9 +63,9 @@ namespace Rove.ViewModel
 
         public ICommand ClearErrorStats { get; }
 
-        public bool IsDisposed => Tomcat.IsDisposed;
+        public bool IsDisposed => Tomcat == null || Tomcat.IsDisposed;
 
-        public int Id => Tomcat.Id;
+        public int Id => Tomcat == null ? -1 : Tomcat.Id;
 
         public bool IsVisible { get; private set; } = false;
 
