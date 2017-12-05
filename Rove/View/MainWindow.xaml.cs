@@ -104,6 +104,7 @@ namespace Rove.View
                 lock (UpdateThreadLock)
                 {
                     viewModel.Update();
+                    Thread.Sleep(TimeSpan.FromMilliseconds(100));
                 }
             }
         }
