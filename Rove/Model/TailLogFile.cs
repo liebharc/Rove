@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Rove.Model
 {
@@ -9,9 +10,9 @@ namespace Rove.Model
     {
         private Thread Reader { get; set; }
 
-        private FileInfo File { get; }
+        public FileInfo File { get; }
 
-        private volatile bool _isActive = true;
+        public volatile bool _isActive = true;
 
         public event Action<bool, List<string>> NewMessagesArrived;
 

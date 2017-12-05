@@ -4,18 +4,45 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Windows;
 using System.Windows.Input;
 using Rove.View;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
-using System.Windows.Threading;
+using System.Text;
 
 namespace Rove.ViewModel
 {
     public sealed class TomcatProcessViewModel : IDisposable, INotifyPropertyChanged
     {
+        private class ColoredLine
+        {
+            public ColoredLine(string message, SolidColorBrush color)
+            {
+                Message = message;
+                Color = color;
+            }
+
+            public string Message { get; }
+            public SolidColorBrush Color { get; }
+        }
+
+        private class ColoredLineBuilder
+        {
+            public ColoredLineBuilder(SolidColorBrush color)
+            {
+                Color = color;
+            }
+
+            public StringBuilder Message { get; } = new StringBuilder();
+            public SolidColorBrush Color { get; }
+
+            public ColoredLine Build()
+            {
+                return new ColoredLine(Message.ToString(), Color);
+            }
+        }
+
         private TomcatProcessControl Tomcat { get; set; }
 
         private object TomcatLock { get; } = new object();
@@ -294,8 +321,11 @@ namespace Rove.ViewModel
                 ClearErrorStatistics();
             }
 
+            List<ColoredLine> coloredLines = new List<ColoredLine>();
+            ColoredLineBuilder lastLine = null;
             foreach (var line in lines)
             {
+                ColoredLine colored;
                 if (ProcessConfig.ErrorMessage.IsMatch(line))
                 {
                     if (ErrorCount == 0)
@@ -303,39 +333,65 @@ namespace Rove.ViewModel
                         FirstError = line;
                     }
                     ErrorCount++;
-                    Write(line, LogColors.ErrorForeground);
+                    colored = new ColoredLine(line, LogColors.ErrorForeground);
                 }
                 else if (ProcessConfig.WarningMessage.IsMatch(line))
                 {
                     WarnCount++;
-                    Write(line, LogColors.WarnForeground);
+                    colored = new ColoredLine(line, LogColors.WarnForeground);
                 }
                 else if (ProcessConfig.StartupMessage.IsMatch(line))
                 {
                     StartupMessageCount++;
-                    Write(line, LogColors.StartupForeground);
+                    colored = new ColoredLine(line, LogColors.StartupForeground);
                 }
                 else
                 {
-                    Write(line, LogColors.InfoForeground);
+                    colored = new ColoredLine(line, LogColors.InfoForeground);
+                }
+
+                if (lastLine == null)
+                {
+                    lastLine = new ColoredLineBuilder(colored.Color);
+                    lastLine.Message.AppendLine(colored.Message);
+                }
+                else if (lastLine.Color == colored.Color)
+                {
+                    lastLine.Message.AppendLine(colored.Message);
+                }
+                else
+                {
+                    coloredLines.Add(lastLine.Build());
+                    lastLine = new ColoredLineBuilder(colored.Color);
+                    lastLine.Message.AppendLine(colored.Message);
                 }
             }
+
+            if (lastLine != null)
+            {
+                coloredLines.Add(lastLine.Build());
+            }
+
+            Write(coloredLines);
         }
 
-        private void Write(string logMessage, SolidColorBrush foreground)
+        private void Write(List<ColoredLine> lines)
         {
-            var tr = new TextRange(Logger.Document.ContentEnd, Logger.Document.ContentEnd);
-            tr.Text = logMessage + "\n";
-            tr.ApplyPropertyValue(TextElement.ForegroundProperty, foreground);
-            
-            if (Config.LogHistory > 0)
+            foreach (ColoredLine line in lines)
             {
-                LineCount++;
-                if (LineCount > Config.LogHistory)
+                var tr = new TextRange(Logger.Document.ContentEnd, Logger.Document.ContentEnd);
+                tr.Text = line.Message;
+                tr.ApplyPropertyValue(TextElement.ForegroundProperty, line.Color);
+
+                if (Config.LogHistory > 0)
                 {
-                    tr = new TextRange(Logger.Document.ContentStart, Logger.Document.ContentEnd);
-                    tr.Text = tr.Text.Remove(0, tr.Text.IndexOf('\n'));
-                    LineCount--;
+                    LineCount++;
+                    if (LineCount > Config.LogHistory)
+                    {
+                        tr = new TextRange(Logger.Document.ContentStart, Logger.Document.ContentEnd);
+                        tr.Text = tr.Text.Remove(0, tr.Text.IndexOf('\n'));
+                        LineCount--;
+                    }
                 }
             }
 
@@ -348,7 +404,7 @@ namespace Rove.ViewModel
         private void DisplayMessageInLogWindow(string message)
         {
             ClearLogWindow();
-            Write(message, LogColors.InfoForeground);
+            Write(new List<ColoredLine> { new ColoredLine(message, LogColors.InfoForeground) });
         }
 
         private void ClearLogWindow()
