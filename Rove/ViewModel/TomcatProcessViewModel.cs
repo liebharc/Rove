@@ -271,7 +271,7 @@ namespace Rove.ViewModel
                     }
                     else
                     {
-                        Result.Error(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file).Report();
+                        Logger.Dispatcher.Invoke(() => DisplayMessageInLogWindow("Waiting for " + file + " to become available"));
                     }
                 }
                 catch (Exception ex)
@@ -343,6 +343,12 @@ namespace Rove.ViewModel
             {
                 Logger.ScrollToEnd();
             }
+        }
+
+        private void DisplayMessageInLogWindow(string message)
+        {
+            ClearLogWindow();
+            Write(message, LogColors.InfoForeground);
         }
 
         private void ClearLogWindow()
