@@ -11,10 +11,9 @@ namespace Rove.Model
 {
     public sealed class TomcatProcessInfo
     {
-        public static IEnumerable<TomcatProcessInfo> RunningTomcatProcesses(List<int> except)
+        public static IEnumerable<TomcatProcessInfo> NewRunningTomcatProcesses(SeenProcessList seen)
         {
-            return Process.GetProcessesByName("java")
-                .Where(p => !except.Contains(p.Id))
+            return seen.GetNewProcesses(Process.GetProcessesByName("java").ToList())
                 .Select(p => new TomcatProcessInfo(p))
                 .ToList();
         }

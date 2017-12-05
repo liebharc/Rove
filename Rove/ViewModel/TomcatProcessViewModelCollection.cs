@@ -1,13 +1,14 @@
 ﻿using Rove.Model;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Rove.ViewModel
 {
     public sealed class TomcatProcessViewModelCollection : IDisposable
     {
         public List<TomcatProcessViewModel> Processes { get; } = new List<TomcatProcessViewModel>();
+
+        private SeenProcessList SeenProcessList { get; } = new SeenProcessList();
 
         public TomcatProcessViewModelCollection(OverallConfigChecked config)
         {
@@ -32,8 +33,7 @@ namespace Rove.ViewModel
 
         internal void Update()
         {
-            var capturedIds = Processes.Select(p => p.Id).ToList();
-            var tomcats = TomcatProcessInfo.RunningTomcatProcesses(capturedIds);
+            var tomcats = TomcatProcessInfo.NewRunningTomcatProcesses(SeenProcessList);
             foreach (var process in Processes)
             {
                 process.Update(tomcats);
