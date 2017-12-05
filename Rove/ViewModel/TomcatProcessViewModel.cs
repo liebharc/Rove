@@ -321,11 +321,18 @@ namespace Rove.ViewModel
                 ClearErrorStatistics();
             }
 
+            List<ColoredLine> coloredLines = ColorLinesAndUpdateStatistics(lines);
+
+            Write(coloredLines);
+        }
+
+        private List<ColoredLine> ColorLinesAndUpdateStatistics(List<string> lines)
+        {
             List<ColoredLine> coloredLines = new List<ColoredLine>();
             ColoredLineBuilder lastLine = null;
             foreach (var line in lines)
             {
-                ColoredLine colored;
+                SolidColorBrush color;
                 if (ProcessConfig.ErrorMessage.IsMatch(line))
                 {
                     if (ErrorCount == 0)
@@ -333,37 +340,37 @@ namespace Rove.ViewModel
                         FirstError = line;
                     }
                     ErrorCount++;
-                    colored = new ColoredLine(line, LogColors.ErrorForeground);
+                    color = LogColors.ErrorForeground;
                 }
                 else if (ProcessConfig.WarningMessage.IsMatch(line))
                 {
                     WarnCount++;
-                    colored = new ColoredLine(line, LogColors.WarnForeground);
+                    color = LogColors.WarnForeground;
                 }
                 else if (ProcessConfig.StartupMessage.IsMatch(line))
                 {
                     StartupMessageCount++;
-                    colored = new ColoredLine(line, LogColors.StartupForeground);
+                    color = LogColors.StartupForeground;
                 }
                 else
                 {
-                    colored = new ColoredLine(line, LogColors.InfoForeground);
+                    color = LogColors.InfoForeground;
                 }
 
                 if (lastLine == null)
                 {
-                    lastLine = new ColoredLineBuilder(colored.Color);
-                    lastLine.Message.AppendLine(colored.Message);
+                    lastLine = new ColoredLineBuilder(color);
+                    lastLine.Message.AppendLine(line);
                 }
-                else if (lastLine.Color == colored.Color)
+                else if (lastLine.Color == color)
                 {
-                    lastLine.Message.AppendLine(colored.Message);
+                    lastLine.Message.AppendLine(line);
                 }
                 else
                 {
                     coloredLines.Add(lastLine.Build());
-                    lastLine = new ColoredLineBuilder(colored.Color);
-                    lastLine.Message.AppendLine(colored.Message);
+                    lastLine = new ColoredLineBuilder(color);
+                    lastLine.Message.AppendLine(line);
                 }
             }
 
@@ -372,33 +379,45 @@ namespace Rove.ViewModel
                 coloredLines.Add(lastLine.Build());
             }
 
-            Write(coloredLines);
+            return coloredLines;
         }
 
         private void Write(List<ColoredLine> lines)
         {
-            foreach (ColoredLine line in lines)
+            List<Paragraph> paragraphs = CreateParagraphs(lines);
+            FlowDocument doc = Logger.Document;
+            if (Config.LogHistory > 0)
             {
-                var tr = new TextRange(Logger.Document.ContentEnd, Logger.Document.ContentEnd);
-                tr.Text = line.Message;
-                tr.ApplyPropertyValue(TextElement.ForegroundProperty, line.Color);
-
-                if (Config.LogHistory > 0)
+                LineCount += paragraphs.Count;
+                while (LineCount > Config.LogHistory)
                 {
-                    LineCount++;
-                    if (LineCount > Config.LogHistory)
-                    {
-                        tr = new TextRange(Logger.Document.ContentStart, Logger.Document.ContentEnd);
-                        tr.Text = tr.Text.Remove(0, tr.Text.IndexOf('\n'));
-                        LineCount--;
-                    }
+                    var firstBlock = doc.Blocks.FirstBlock;
+                    doc.Blocks.Remove(firstBlock); ;
+                    LineCount--;
                 }
             }
+
+            doc.Blocks.AddRange(paragraphs);
 
             if (AutoScroll)
             {
                 Logger.ScrollToEnd();
             }
+        }
+
+        private List<Paragraph> CreateParagraphs(List<ColoredLine> lines)
+        {
+            List<Paragraph> paragraphs = new List<Paragraph>();
+            foreach (ColoredLine line in lines)
+            {
+                Paragraph para = new Paragraph();
+                Span span = new Span() { Foreground = line.Color };
+                span.Inlines.Add(line.Message);
+                para.Inlines.Add(span);
+                paragraphs.Add(para);
+            }
+
+            return paragraphs;
         }
 
         private void DisplayMessageInLogWindow(string message)
