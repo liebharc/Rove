@@ -9,9 +9,9 @@ namespace Rove.Model
     {
         private Thread Reader { get; set; }
 
-        public FileInfo File { get; }
+        private FileInfo File { get; }
 
-        public volatile bool _isActive = true;
+        private volatile bool _isActive = true;
 
         public event Action<bool, List<string>> NewMessagesArrived;
 
