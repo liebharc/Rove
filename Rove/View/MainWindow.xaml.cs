@@ -10,6 +10,7 @@ using Xceed.Wpf.AvalonDock.Layout.Serialization;
 using System.Windows.Data;
 using System.Globalization;
 using System.Threading;
+using System.Linq;
 
 namespace Rove.View
 {
@@ -133,17 +134,35 @@ namespace Rove.View
             {
                 var panel = new ProcessInfo { DataContext = process };
                 process.Initialize(panel);
-                Root.Children.Add(
-                    new LayoutDocument
+                var document = new LayoutDocument
                     {
                         Title = process.Title,
                         Content = panel,
                         CanClose = false,
                         ContentId = process.Title
-                    });
+                    };
+
+                Root.Children.Add(document);
             }
 
             RestoreLayout();
+
+            var panes =
+                Layout.Layout.Children.OfType<LayoutPanel>()
+                .SelectMany(c => c.Children.OfType<LayoutDocumentPaneGroup>())
+                .SelectMany(c => c.Children.OfType<LayoutDocumentPane>())
+                .ToList();
+            var available =
+                panes
+                .SelectMany(c => c.Children.OfType<LayoutDocument>());
+            var orphans = Root.Children.OfType<LayoutDocument>().Where(d => available.All(a => a.ContentId != d.ContentId)).ToList();
+            foreach (var orphan in orphans)
+            {
+                foreach (var pane in panes)
+                {
+                    pane.Children.Add(orphan);
+                }
+            }
         }
 
         private void StoreCurrentLayout()

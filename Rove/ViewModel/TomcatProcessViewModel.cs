@@ -337,12 +337,12 @@ namespace Rove.ViewModel
             }
         }
 
-        private void LogFile_NewMessagesArrived(bool isNewTailSession, List<string> lines)
+        private void LogFile_NewMessagesArrived(bool isNewTailSession, int charCount, List<string> lines)
         {
-            Application.Current.Dispatcher.BeginInvoke(new Action(() => WriteLines(isNewTailSession, lines)));
+            Application.Current.Dispatcher.BeginInvoke(new Action(() => WriteLines(isNewTailSession, charCount, lines)));
         }
 
-        private void WriteLines(bool isNewTailSession, List<string> lines)
+        private void WriteLines(bool isNewTailSession, int charCount, List<string> lines)
         {
             if (isNewTailSession)
             {
@@ -350,7 +350,7 @@ namespace Rove.ViewModel
                 ClearErrorStatistics();
             }
 
-            if (lines.Count > Config.UpdateLimit)
+            if (charCount > Config.UpdateLimit)
             {
                 DisplayMessageInLogWindow("Too many new log messages for this application. Consider to open the log file with a dedicated log viewer tool.");
                 return;

@@ -14,7 +14,7 @@ namespace Rove.Model
 
         public volatile bool _isActive = true;
 
-        public event Action<bool, List<string>> NewMessagesArrived;
+        public event Action<bool, int, List<string>> NewMessagesArrived;
 
         public TailLogFile(FileInfo file)
         {
@@ -49,14 +49,16 @@ namespace Rove.Model
                     {
                         reader.BaseStream.Seek(lastMaxOffset, SeekOrigin.Begin);
                         string line;
+                        int charCount = 0;
                         List<string> lines = new List<string>();
                         while ((line = reader.ReadLine()) != null)
                         {
                             lines.Add(line);
+                            charCount += line.Length;
                         }
 
                         lastMaxOffset = reader.BaseStream.Position;
-                        NewMessagesArrived?.Invoke(isNewTailSession, lines);
+                        NewMessagesArrived?.Invoke(isNewTailSession, charCount, lines);
                         isNewTailSession = false;
                     }
 
