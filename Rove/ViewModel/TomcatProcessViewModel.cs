@@ -7,43 +7,15 @@ using System.Linq;
 using System.Windows.Input;
 using Rove.View;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Media;
 using System.Text;
+using System.Windows;
 
 namespace Rove.ViewModel
 {
     public sealed class TomcatProcessViewModel : IDisposable, INotifyPropertyChanged
     {
-        private class ColoredLine
-        {
-            public ColoredLine(string message, SolidColorBrush color)
-            {
-                Message = message;
-                Color = color;
-            }
-
-            public string Message { get; }
-            public SolidColorBrush Color { get; }
-        }
-
-        private class ColoredLineBuilder
-        {
-            public ColoredLineBuilder(SolidColorBrush color)
-            {
-                Color = color;
-            }
-
-            public StringBuilder Message { get; } = new StringBuilder();
-            public SolidColorBrush Color { get; }
-
-            public ColoredLine Build()
-            {
-                return new ColoredLine(Message.ToString(), Color);
-            }
-        }
-
-        private class LogFileException : Exception
+       private class LogFileException : Exception
         {
             public LogFileException(string message) : base(message)
             {
@@ -84,7 +56,9 @@ namespace Rove.ViewModel
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private RichTextBox Logger { get; set; }
+        private StringBuilder LogContent { get; } = new StringBuilder();
+
+        private FastColoredTextBoxNS.FastColoredTextBox LogViewer { get; set; }
 
         private int LineCount { get; set; }
 
@@ -176,6 +150,7 @@ namespace Rove.ViewModel
                 throw new ArgumentNullException(nameof(processConfig));
             }
 
+            AutoScroll = processConfig.AutoScroll;
             StartProcess = new LambdaCommand(() => ProcessUtils.Run(processConfig.StartProcessScript).Report());
             Close = new LambdaCommand(() => Tomcat?.Kill());
             OpenLogFile = new LambdaCommand(() => ProcessUtils.Run("explorer.exe", QuoteDouble(LogFile.File.FullName)).Report());
@@ -277,7 +252,38 @@ namespace Rove.ViewModel
 
         internal void Initialize(ProcessInfo panel)
         {
-            Logger = panel.Log;
+            LogViewer = panel.Log.Child as FastColoredTextBoxNS.FastColoredTextBox;
+            LogViewer.ShowLineNumbers = false;
+            LogViewer.ShowFoldingLines = false;
+            LogViewer.TextChanged += TextBox_TextChanged;
+        }
+
+        private void TextBox_TextChanged(object sender, FastColoredTextBoxNS.TextChangedEventArgs e)
+        {
+            if (ProcessConfig.ErrorMessage.IsMatch(e.ChangedRange.Text))
+            {
+                e.ChangedRange.SetStyle(LogColors.ErrorStyle);
+                ErrorCount++;
+                if (ErrorCount == 0)
+                {
+                    FirstError = e.ChangedRange.Text;
+                }
+            }
+            else if (ProcessConfig.WarningMessage.IsMatch(e.ChangedRange.Text))
+            {
+                e.ChangedRange.SetStyle(LogColors.WarnStyle);
+                WarnCount++;
+            }
+            else if (ProcessConfig.StartupMessage.IsMatch(e.ChangedRange.Text))
+            {
+                e.ChangedRange.SetStyle(LogColors.StartupStyle);
+                StartupMessageCount++;
+            }
+
+            if (AutoScroll)
+            {
+                LogViewer.VerticalScroll.Value = LogViewer.VerticalScroll.Maximum;
+            }
         }
 
         private void OnNewTomcat()
@@ -309,7 +315,7 @@ namespace Rove.ViewModel
             }
             else if (logResult.StdOut.Count == 0)
             {
-                Logger.Dispatcher.Invoke(() => DisplayMessageInLogWindow(ProcessConfig.FindLogFileScript+ " didn't return a result yet"));
+                Application.Current.Dispatcher.Invoke(() => DisplayMessageInLogWindow(ProcessConfig.FindLogFileScript+ " didn't return a result yet"));
             }
             else if (logResult.StdOut.Count > 1)
             {
@@ -328,7 +334,7 @@ namespace Rove.ViewModel
                     }
                     else
                     {
-                        Logger.Dispatcher.Invoke(() => DisplayMessageInLogWindow("Waiting for " + file + " to become available"));
+                        Application.Current.Dispatcher.Invoke(() => DisplayMessageInLogWindow("Waiting for " + file + " to become available"));
                     }
                 }
                 catch (Exception ex)
@@ -340,7 +346,7 @@ namespace Rove.ViewModel
 
         private void LogFile_NewMessagesArrived(bool isNewTailSession, List<string> lines)
         {
-            Logger.Dispatcher.BeginInvoke(new Action(() => WriteLines(isNewTailSession, lines)));
+            Application.Current.Dispatcher.BeginInvoke(new Action(() => WriteLines(isNewTailSession, lines)));
         }
 
         private void WriteLines(bool isNewTailSession, List<string> lines)
@@ -351,113 +357,46 @@ namespace Rove.ViewModel
                 ClearErrorStatistics();
             }
 
-            List<ColoredLine> coloredLines = ColorLinesAndUpdateStatistics(lines);
-            Write(coloredLines);
-        }
-
-        private List<ColoredLine> ColorLinesAndUpdateStatistics(List<string> lines)
-        {
-            List<ColoredLine> coloredLines = new List<ColoredLine>();
-            ColoredLineBuilder lastLine = null;
-            foreach (var line in lines)
+            if (lines.Count > Config.UpdateLimit)
             {
-                SolidColorBrush color;
-                if (ProcessConfig.ErrorMessage.IsMatch(line))
-                {
-                    if (ErrorCount == 0)
-                    {
-                        FirstError = line;
-                    }
-                    ErrorCount++;
-                    color = LogColors.ErrorForeground;
-                }
-                else if (ProcessConfig.WarningMessage.IsMatch(line))
-                {
-                    WarnCount++;
-                    color = LogColors.WarnForeground;
-                }
-                else if (ProcessConfig.StartupMessage.IsMatch(line))
-                {
-                    StartupMessageCount++;
-                    color = LogColors.StartupForeground;
-                }
-                else
-                {
-                    color = LogColors.InfoForeground;
-                }
-
-                if (lastLine == null)
-                {
-                    lastLine = new ColoredLineBuilder(color);
-                    lastLine.Message.AppendLine(line);
-                }
-                else if (lastLine.Color == color)
-                {
-                    lastLine.Message.AppendLine(line);
-                }
-                else
-                {
-                    coloredLines.Add(lastLine.Build());
-                    lastLine = new ColoredLineBuilder(color);
-                    lastLine.Message.AppendLine(line);
-                }
+                DisplayMessageInLogWindow("Too many new log messages for this application. Consider to open the log file with a dedicated log viewer tool.");
+                return;
             }
 
-            if (lastLine != null)
+            int startLine = 0;
+            if (Config.LogHistory > 0 && lines.Count > Config.LogHistory)
             {
-                coloredLines.Add(lastLine.Build());
+                LogViewer.Clear();
+                LineCount = 0;
+                startLine = lines.Count - Config.LogHistory;
             }
 
-            return coloredLines;
-        }
+            for (int i = startLine; i < lines.Count; i++)
+            {
+                LogViewer.AppendText(lines[i]);
+                LogViewer.AppendText("\n");
+            }
 
-        private void Write(List<ColoredLine> lines)
-        {
-            List<Paragraph> paragraphs = CreateParagraphs(lines);
-            FlowDocument doc = Logger.Document;
             if (Config.LogHistory > 0)
             {
-                LineCount += paragraphs.Count;
-                while (LineCount > Config.LogHistory)
+                LineCount += lines.Count;
+                if (LineCount > Config.LogHistory)
                 {
-                    var firstBlock = doc.Blocks.FirstBlock;
-                    doc.Blocks.Remove(firstBlock); ;
-                    LineCount--;
+                    LogViewer.RemoveLines(Enumerable.Range(0, LineCount - Config.LogHistory).ToList());
+                    LineCount = Config.LogHistory;
                 }
             }
-
-            doc.Blocks.AddRange(paragraphs);
-
-            if (AutoScroll)
-            {
-                Logger.ScrollToEnd();
-            }
-        }
-
-        private List<Paragraph> CreateParagraphs(List<ColoredLine> lines)
-        {
-            List<Paragraph> paragraphs = new List<Paragraph>();
-            foreach (ColoredLine line in lines)
-            {
-                Paragraph para = new Paragraph();
-                Span span = new Span() { Foreground = line.Color };
-                span.Inlines.Add(line.Message);
-                para.Inlines.Add(span);
-                paragraphs.Add(para);
-            }
-
-            return paragraphs;
         }
 
         private void DisplayMessageInLogWindow(string message)
         {
             ClearLogWindow();
-            Write(new List<ColoredLine> { new ColoredLine(message, LogColors.InfoForeground) });
+            LogViewer.Text = message;
         }
 
         private void ClearLogWindow()
         {
-            new TextRange(Logger.Document.ContentStart, Logger.Document.ContentEnd).Text = string.Empty;
+            LogViewer.Text = string.Empty;
         }
 
         private static string QuoteSingle(string text)

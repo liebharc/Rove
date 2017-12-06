@@ -120,7 +120,9 @@ namespace Rove.View
                 }
 
                 UpdateThread.Join();
-                SaveLayout();
+                StoreCurrentLayout();
+                StoreCurrentAutoScrollValues();
+                WriteConfigFile(LastConfig, GetLogName());
                 IsDisposed = true;
             }
         }
@@ -144,7 +146,7 @@ namespace Rove.View
             RestoreLayout();
         }
 
-        private void SaveLayout()
+        private void StoreCurrentLayout()
         {
             try
             {
@@ -153,12 +155,25 @@ namespace Rove.View
                     XmlLayoutSerializer xmlLayout = new XmlLayoutSerializer(Layout);
                     xmlLayout.Serialize(writer);
                     LastConfig.DisplayLayout = writer.ToString();
-                    WriteConfigFile(LastConfig, GetLogName());
                 }
             }
             catch (Exception ex)
             {
                 Result.Error("Failed to save display configuration: " + ex.Message).Report();
+            }
+        }
+
+        private void StoreCurrentAutoScrollValues()
+        {
+            var model = DataContext as TomcatProcessViewModelCollection;
+            if (model == null || model.Processes.Count != LastConfig.ProcessConfigs.Count)
+            {
+                return;
+            }
+
+            for (int i = 0; i < model.Processes.Count; i++)
+            {
+                LastConfig.ProcessConfigs[i].AutoScroll = model.Processes[i].AutoScroll;
             }
         }
 

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Rove.View"
+             xmlns:fastcoloredtextboxns="clr-namespace:FastColoredTextBoxNS;assembly=FastColoredTextBox"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
@@ -43,7 +44,10 @@
                     <Button Content="Clear" Command="{Binding ClearErrorStats}" />
                 </StackPanel>
             </Grid>
-            <RichTextBox Name="Log" 
+            <WindowsFormsHost Name="Log">
+                <fastcoloredtextboxns:FastColoredTextBox />
+            </WindowsFormsHost>
+            <!--RichTextBox Name="Log" 
                             DockPanel.Dock="Bottom"
                             FontFamily="Consolas" 
                             IsReadOnly="True"
@@ -54,7 +58,7 @@
                         <Setter Property="Margin" Value="0" />
                     </Style>
                 </RichTextBox.Resources>
-            </RichTextBox>
+            </-->
         </DockPanel>
         <Button Content="Start" Command="{Binding StartProcess}" Visibility="{Binding Path=IsEnabled, Converter={StaticResource ShowOnDisabled}}"
                 HorizontalAlignment="Center" VerticalAlignment="Center"/>

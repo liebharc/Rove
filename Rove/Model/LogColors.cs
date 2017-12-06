@@ -1,15 +1,15 @@
-﻿using System.Windows.Media;
+﻿using FastColoredTextBoxNS;
+using System.Windows.Media;
+using System.Drawing;
 
 namespace Rove.Model
 {
     public static class LogColors
     {
-        public static SolidColorBrush InfoForeground { get; } = new SolidColorBrush(Colors.Black);
+        public static Style WarnStyle { get; } = new TextStyle(System.Drawing.Brushes.Orange, null, FontStyle.Regular);
 
-        public static SolidColorBrush WarnForeground { get; } = new SolidColorBrush(Colors.Orange);
+        public static Style ErrorStyle { get; } = new TextStyle(System.Drawing.Brushes.Red, null, FontStyle.Regular);
 
-        public static SolidColorBrush ErrorForeground { get; } = new SolidColorBrush(Colors.Red);
-
-        public static SolidColorBrush StartupForeground { get; } = new SolidColorBrush(Colors.Blue);
+        public static Style StartupStyle { get; } = new TextStyle(System.Drawing.Brushes.Blue, null, FontStyle.Regular);
     }
 }

@@ -40,12 +40,6 @@ namespace Rove.View
         public ProcessInfo()
         {
             InitializeComponent();
-            DisableWordWrapOnLog();
-        }
-
-        private void DisableWordWrapOnLog()
-        {
-            Log.Document.PageWidth = 1000;
         }
     }
 }

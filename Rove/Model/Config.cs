@@ -28,6 +28,7 @@ namespace Rove.Model
                 {
                     OnAnyProcessStartedScript = "StartupScript.ps1",
                     LogHistory = 10000,
+                    UpdateLimit = 100,
                     DisplayLayout = string.Empty
                 };
 
@@ -40,7 +41,8 @@ namespace Rove.Model
                     OnProcessStartedScript = "OnProcessStartedScript.ps1",
                     FindLogFileScript = "FindLogFileScript.ps1",
                     IsKnownProcess= ".*",
-                    StartProcessScript ="StartProcessScript.ps1"
+                    StartProcessScript ="StartProcessScript.ps1",
+                    AutoScroll = true
                 };
 
                 config.ProcessConfigs.Add(process);
@@ -55,6 +57,8 @@ namespace Rove.Model
         public List<ProcessConfig> ProcessConfigs { get; } = new List<ProcessConfig>();
 
         public int LogHistory { get; set; } = 1000;
+
+        public int UpdateLimit { get; set; } = 100;
 
         public OverallConfigChecked ToOverallConfig()
         {
@@ -73,6 +77,11 @@ namespace Rove.Model
             {
                 throw new ConfigException(nameof(OverallConfig), nameof(LogHistory));
             }
+            UpdateLimit = ser.UpdateLimit;
+            if (UpdateLimit < 0)
+            {
+                throw new ConfigException(nameof(OverallConfig), nameof(UpdateLimit));
+            }
 
             foreach (var s in ser.ProcessConfigs)
             {
@@ -83,6 +92,7 @@ namespace Rove.Model
         public string DisplayLayout { get; }
         public FileInfo OnNewProcessScript { get; }
         public int LogHistory { get; }
+        public int UpdateLimit { get; }
         public List<ProcessConfigChecked> ProcessConfigs { get; } = new List<ProcessConfigChecked>();
     }
 
@@ -105,6 +115,8 @@ namespace Rove.Model
         public string StartupMessage { get; set; } = string.Empty;
 
         public string Color { get; set; } = string.Empty;
+
+        public bool AutoScroll { get; set; } = true;
 
         public ProcessConfigChecked ToProcessConfig()
         {
@@ -130,9 +142,10 @@ namespace Rove.Model
             IsKnownProcess = Converstions.CompileRegex(ser.ProcessName, nameof(ser.IsKnownProcess), ser.IsKnownProcess);
             StartProcessScript = Converstions.GetMandatoryPath(ser.ProcessName, nameof(ser.StartProcessScript), ser.StartProcessScript);
             Color = Converstions.GetColor(ser.ProcessName, nameof(ser.Color), ser.Color);
+            AutoScroll = ser.AutoScroll;
         }
 
-        public string ProcessName { get;} 
+        public string ProcessName { get; } 
 
         public Regex WarningMessage { get; }
 
@@ -150,6 +163,7 @@ namespace Rove.Model
 
         public Color Color { get; }
 
+        public bool AutoScroll { get; }
     }
 
     public static class Converstions
