@@ -29,12 +29,14 @@
         <Grid DockPanel.Dock="Bottom" IsEnabled="{Binding Path=IsEnabled}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <CheckBox Grid.Column="0" Content="Follow Tail" IsChecked="{Binding AutoScroll}" />
+            <CheckBox Grid.Column="1" Content="Update" IsChecked="{Binding UpdateEnabled}" />
 
-            <StackPanel Orientation="Horizontal" Grid.Column="2">
+            <StackPanel Orientation="Horizontal" Grid.Column="3">
                 <Label>Startup</Label>
                 <Label Content="{Binding StartupMessageCount}"/>
                 <Label>Warnings</Label>

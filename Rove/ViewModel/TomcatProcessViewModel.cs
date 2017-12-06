@@ -78,6 +78,8 @@ namespace Rove.ViewModel
 
         private Queue<TrafficStat> RecentTraffic { get; } = new Queue<TrafficStat>();
 
+        private List<string> Backlog { get; } = new List<string>();
+
         private int _warnCount;
         public int WarnCount
         {
@@ -151,6 +153,26 @@ namespace Rove.ViewModel
             {
                 _autoScroll = value;
                 OnPropertyChanged(nameof(AutoScroll));
+            }
+        }
+
+        private bool _updateEnabled = true;
+
+        public bool UpdateEnabled
+        {
+            get
+            {
+                return _updateEnabled;
+            }
+
+            set
+            {
+                _updateEnabled = value;
+                OnPropertyChanged(nameof(UpdateEnabled));
+                if (value)
+                {
+                    ProcessBacklog();
+                }
             }
         }
 
@@ -355,7 +377,23 @@ namespace Rove.ViewModel
 
         private void LogFile_NewMessagesArrived(bool isNewTailSession, int charCount, List<string> lines)
         {
+            if (!UpdateEnabled)
+            {
+                Backlog.AddRange(lines);
+                if (Config.LogHistory > 0 && Backlog.Count > Config.LogHistory)
+                {
+                    Backlog.RemoveRange(0, Backlog.Count - Config.LogHistory);
+                }
+                return;
+            }
+
             Application.Current.Dispatcher.BeginInvoke(new Action(() => WriteLines(isNewTailSession, charCount, lines)));
+        }
+
+        private void ProcessBacklog()
+        {
+            WriteLines(false, 0, Backlog);
+            Backlog.Clear();
         }
 
         private void WriteLines(bool isNewTailSession, int charCount, List<string> lines)
@@ -368,7 +406,7 @@ namespace Rove.ViewModel
 
             var now = DateTime.Now;
             RecentTraffic.Enqueue(new TrafficStat(now, lines.Count, charCount));
-            while ((now - RecentTraffic.First().Time) > TimeSpan.FromSeconds(2))
+            while ((now - RecentTraffic.First().Time) > TimeSpan.FromSeconds(3))
             {
                 RecentTraffic.Dequeue();
             }
@@ -413,7 +451,7 @@ namespace Rove.ViewModel
         private void DisplayMessageInLogWindow(string message)
         {
             ClearLogWindow();
-            LogViewer.Text = message;
+            LogViewer.Text = message + "\n";
         }
 
         private void ClearLogWindow()
