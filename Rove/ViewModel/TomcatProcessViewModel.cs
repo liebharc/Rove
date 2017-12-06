@@ -368,7 +368,7 @@ namespace Rove.ViewModel
 
             var now = DateTime.Now;
             RecentTraffic.Enqueue(new TrafficStat(now, lines.Count, charCount));
-            while ((RecentTraffic.First().Time - now) > TimeSpan.FromSeconds(1))
+            while ((now - RecentTraffic.First().Time) > TimeSpan.FromSeconds(2))
             {
                 RecentTraffic.Dequeue();
             }
