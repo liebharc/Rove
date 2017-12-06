@@ -15,7 +15,21 @@ namespace Rove.ViewModel
 {
     public sealed class TomcatProcessViewModel : IDisposable, INotifyPropertyChanged
     {
-       private class LogFileException : Exception
+        private class TrafficStat
+        {
+            public TrafficStat(DateTime time, int lines, int chars)
+            {
+                Time = time;
+                Lines = lines;
+                Chars = chars;
+            }
+
+            public DateTime Time { get; }
+            public int Lines { get; }
+            public int Chars { get; }
+        }
+
+        private class LogFileException : Exception
         {
             public LogFileException(string message) : base(message)
             {
@@ -61,6 +75,8 @@ namespace Rove.ViewModel
         private FastColoredTextBoxNS.FastColoredTextBox LogViewer { get; set; }
 
         private int LineCount { get; set; }
+
+        private Queue<TrafficStat> RecentTraffic { get; } = new Queue<TrafficStat>();
 
         private int _warnCount;
         public int WarnCount
@@ -350,9 +366,17 @@ namespace Rove.ViewModel
                 ClearErrorStatistics();
             }
 
-            if (charCount > Config.UpdateLimit)
+            var now = DateTime.Now;
+            RecentTraffic.Enqueue(new TrafficStat(now, lines.Count, charCount));
+            while ((RecentTraffic.First().Time - now) > TimeSpan.FromSeconds(1))
             {
-                DisplayMessageInLogWindow("Too many new log messages for this application. Consider to open the log file with a dedicated log viewer tool.");
+                RecentTraffic.Dequeue();
+            }
+
+            double avgVelocity = RecentTraffic.Select(t => t.Chars).Average();
+            if (RecentTraffic.Count > 2 && avgVelocity > Config.UpdateLimit)
+            {
+                DisplayMessageInLogWindow("Too many new log messages for this application. Consider to open the log file with a dedicated log viewer tool. Received " + avgVelocity + " chars in the last second");
                 return;
             }
 

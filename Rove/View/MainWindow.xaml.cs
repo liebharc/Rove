@@ -135,18 +135,22 @@ namespace Rove.View
                 var panel = new ProcessInfo { DataContext = process };
                 process.Initialize(panel);
                 var document = new LayoutDocument
-                    {
-                        Title = process.Title,
-                        Content = panel,
-                        CanClose = false,
-                        ContentId = process.Title
-                    };
+                {
+                    Title = process.Title,
+                    Content = panel,
+                    CanClose = false,
+                    ContentId = process.Title
+                };
 
                 Root.Children.Add(document);
             }
 
             RestoreLayout();
+            HandleChildrenWhichAreNotPartOfTheRestoredLayout();
+        }
 
+        private void HandleChildrenWhichAreNotPartOfTheRestoredLayout()
+        {
             var panes =
                 Layout.Layout.Children.OfType<LayoutPanel>()
                 .SelectMany(c => c.Children.OfType<LayoutDocumentPaneGroup>())
