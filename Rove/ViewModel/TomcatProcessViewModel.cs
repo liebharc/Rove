@@ -253,8 +253,6 @@ namespace Rove.ViewModel
         internal void Initialize(ProcessInfo panel)
         {
             LogViewer = panel.Log.Child as FastColoredTextBoxNS.FastColoredTextBox;
-            LogViewer.ShowLineNumbers = false;
-            LogViewer.ShowFoldingLines = false;
             LogViewer.TextChanged += TextBox_TextChanged;
         }
 
@@ -278,11 +276,6 @@ namespace Rove.ViewModel
             {
                 e.ChangedRange.SetStyle(LogColors.StartupStyle);
                 StartupMessageCount++;
-            }
-
-            if (AutoScroll)
-            {
-                LogViewer.VerticalScroll.Value = LogViewer.VerticalScroll.Maximum;
             }
         }
 
@@ -385,6 +378,11 @@ namespace Rove.ViewModel
                     LogViewer.RemoveLines(Enumerable.Range(0, LineCount - Config.LogHistory).ToList());
                     LineCount = Config.LogHistory;
                 }
+            }
+
+            if (AutoScroll)
+            {
+                LogViewer.GoEnd();
             }
         }
 

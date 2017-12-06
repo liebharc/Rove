@@ -172,6 +172,17 @@ namespace Rove.Model
         {
             try
             {
+                // Remove trailing .* since they aren't required and cost a lot of performance
+                if (regex.StartsWith(".*"))
+                {
+                    regex = regex.Substring(2);
+                }
+
+                if (regex.EndsWith(".*"))
+                {
+                    regex = regex.Substring(0, regex.Length - 2);
+                }
+
                 return new Regex(regex, RegexOptions.Compiled);
             }
             catch (ArgumentException ex)

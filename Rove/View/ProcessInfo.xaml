@@ -7,60 +7,50 @@
              xmlns:fastcoloredtextboxns="clr-namespace:FastColoredTextBoxNS;assembly=FastColoredTextBox"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
-    <Grid>
-        <Grid.Resources>
-            <local:ShowOnDisabledConverter x:Key="ShowOnDisabled"/>
-        </Grid.Resources>
-        <DockPanel LastChildFill="True" IsEnabled="{Binding Path=IsEnabled}">
-            <Grid DockPanel.Dock="Top" Background="{Binding Color}">
-                <Grid.Resources>
-                    <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
-                </Grid.Resources>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" />
-                <Button Grid.Column="1" Command="{Binding OpenLogFile}">Open Log ...</Button>
-                <Button Grid.Column="3" Command="{Binding Close}">x</Button>
-            </Grid>
-            <Grid DockPanel.Dock="Bottom" >
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <CheckBox Grid.Column="0" Content="Follow Tail" IsChecked="{Binding AutoScroll}" />
+    <DockPanel LastChildFill="True">
+        <Grid DockPanel.Dock="Top" Background="{Binding Color}">
+            <Grid.Resources>
+                <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
+                <local:ShowOnDisabledConverter x:Key="ShowOnDisabled"/>
+            </Grid.Resources>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" IsEnabled="{Binding Path=IsEnabled}"/>
+            <Button Grid.Column="1" Command="{Binding OpenLogFile}" IsEnabled="{Binding Path=IsEnabled}">Open Log ...</Button>
 
-                <StackPanel Orientation="Horizontal" Grid.Column="2">
-                    <Label>Startup</Label>
-                    <Label Content="{Binding StartupMessageCount}"/>
-                    <Label>Warnings</Label>
-                    <Label Content="{Binding WarnCount}"/>
-                    <Label ToolTip="{Binding FirstError}">Errors</Label>
-                    <Label Content="{Binding ErrorCount}" ToolTip="{Binding FirstError}"/>
-                    <Button Content="Clear" Command="{Binding ClearErrorStats}" />
-                </StackPanel>
-            </Grid>
-            <WindowsFormsHost Name="Log">
-                <fastcoloredtextboxns:FastColoredTextBox />
-            </WindowsFormsHost>
-            <!--RichTextBox Name="Log" 
-                            DockPanel.Dock="Bottom"
-                            FontFamily="Consolas" 
-                            IsReadOnly="True"
-                            VerticalScrollBarVisibility="Visible"
-                            HorizontalScrollBarVisibility="Visible">
-                <RichTextBox.Resources>
-                    <Style TargetType="{x:Type Paragraph}">
-                        <Setter Property="Margin" Value="0" />
-                    </Style>
-                </RichTextBox.Resources>
-            </-->
-        </DockPanel>
-        <Button Content="Start" Command="{Binding StartProcess}" Visibility="{Binding Path=IsEnabled, Converter={StaticResource ShowOnDisabled}}"
-                HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    </Grid>
+            <Button Grid.Column="3" Command="{Binding StartProcess}" Visibility="{Binding Path=IsEnabled, Converter={StaticResource ShowOnDisabled}}">Start</Button>
+            <Button Grid.Column="4" Command="{Binding Close}" IsEnabled="{Binding Path=IsEnabled}">x</Button>
+        </Grid>
+        <Grid DockPanel.Dock="Bottom" IsEnabled="{Binding Path=IsEnabled}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <CheckBox Grid.Column="0" Content="Follow Tail" IsChecked="{Binding AutoScroll}" />
+
+            <StackPanel Orientation="Horizontal" Grid.Column="2">
+                <Label>Startup</Label>
+                <Label Content="{Binding StartupMessageCount}"/>
+                <Label>Warnings</Label>
+                <Label Content="{Binding WarnCount}"/>
+                <Label ToolTip="{Binding FirstError}">Errors</Label>
+                <Label Content="{Binding ErrorCount}" ToolTip="{Binding FirstError}"/>
+                <Button Content="Clear" Command="{Binding ClearErrorStats}" />
+            </StackPanel>
+        </Grid>
+        <WindowsFormsHost Name="Log" DockPanel.Dock="Bottom" IsEnabled="{Binding Path=IsEnabled}">
+            <fastcoloredtextboxns:FastColoredTextBox 
+                Font="Consolas"
+                ReadOnly="True"
+                ShowFoldingLines="False"
+                ShowLineNumbers="False"
+                ShowScrollBars="True"/>
+        </WindowsFormsHost>
+    </DockPanel>
 </UserControl>
