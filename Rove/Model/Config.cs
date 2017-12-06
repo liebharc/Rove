@@ -168,6 +168,7 @@ namespace Rove.Model
 
         public static FileInfo GetOptionalPath(string section, string argName, string path)
         {
+            path = path.Trim(new[] { '"' });
             if (string.IsNullOrEmpty(path))
             {
                 return null;
@@ -178,6 +179,7 @@ namespace Rove.Model
 
         public static FileInfo GetMandatoryPath(string section, string argName, string path)
         {
+            path = path.Trim(new[] { '"' });
             if (string.IsNullOrEmpty(path))
             {
                 throw new ConfigException(section, argName);
