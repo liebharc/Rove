@@ -43,6 +43,13 @@ namespace Rove.ViewModel
             }
         }
 
+        private class LogFileException : Exception
+        {
+            public LogFileException(string message) : base(message)
+            {
+            }
+        }
+
         private TomcatProcessControl Tomcat { get; set; }
 
         private object TomcatLock { get; } = new object();
@@ -227,24 +234,44 @@ namespace Rove.ViewModel
         {
             lock (TomcatLock)
             {
-                if (Tomcat == null)
+                try
                 {
-                    Tomcat = tomcats
-                        .FirstOrDefault(t => ProcessConfig.IsKnownProcess.IsMatch(t.CommandLine))
-                        ?.Control();
-                    if (Tomcat != null)
-                    {
-                        OnNewTomcat();
-                        IsVisible = false;
-                        OnTomcatChanged();
-                    }
+                    TryToAttachToTomcatIfIdle(tomcats);
                 }
-                else if (Tomcat.IsDisposed)
+                catch (LogFileException ex)
                 {
+                    Result.Error(ex.Message).Report();
+                    Tomcat?.Dispose();
+                    IsVisible = false;
                     Tomcat = null;
+                }
+            }
+        }
+
+        private void TryToAttachToTomcatIfIdle(IEnumerable<TomcatProcessInfo> tomcats)
+        {
+            if (Tomcat == null)
+            {
+                Tomcat = tomcats
+                    .FirstOrDefault(t => ProcessConfig.IsKnownProcess.IsMatch(t.CommandLine))
+                    ?.Control();
+                if (Tomcat != null)
+                {
+                    OnNewTomcat();
+                    StartToReadLogFile();
                     IsVisible = false;
                     OnTomcatChanged();
                 }
+            }
+            else if (Tomcat.IsDisposed)
+            {
+                Tomcat = null;
+                IsVisible = false;
+                OnTomcatChanged();
+            }
+            else if (LogFile == null)
+            {
+                StartToReadLogFile();
             }
         }
 
@@ -271,7 +298,10 @@ namespace Rove.ViewModel
             {
                 Script.Run(ProcessConfig.OnProcessStartedScript, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
             }
+        }
 
+        private void StartToReadLogFile()
+        {
             var logResult = Script.Run(ProcessConfig.FindLogFileScript, new[] { QuoteSingle(Tomcat.CommandLine) });
             if (logResult.Check().IsError)
             {
@@ -279,11 +309,11 @@ namespace Rove.ViewModel
             }
             else if (logResult.StdOut.Count == 0)
             {
-                Result.Error(ProcessConfig.FindLogFileScript + " returned no result").Report();
+                Logger.Dispatcher.Invoke(() => DisplayMessageInLogWindow(ProcessConfig.FindLogFileScript+ " didn't return a result yet"));
             }
             else if (logResult.StdOut.Count > 1)
             {
-                Result.Error(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut)).Report();
+                throw new LogFileException(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut));
             }
             else
             {
@@ -303,7 +333,7 @@ namespace Rove.ViewModel
                 }
                 catch (Exception ex)
                 {
-                    Result.Error(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file + " error was " + ex.Message).Report();
+                    throw new LogFileException(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file + " error was " + ex.Message);
                 }
             }
         }
