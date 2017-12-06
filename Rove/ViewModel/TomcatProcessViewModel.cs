@@ -340,7 +340,7 @@ namespace Rove.ViewModel
 
         private void LogFile_NewMessagesArrived(bool isNewTailSession, List<string> lines)
         {
-            Logger.Dispatcher.Invoke(() => WriteLines(isNewTailSession, lines));
+            Logger.Dispatcher.BeginInvoke(new Action(() => WriteLines(isNewTailSession, lines)));
         }
 
         private void WriteLines(bool isNewTailSession, List<string> lines)
@@ -352,7 +352,6 @@ namespace Rove.ViewModel
             }
 
             List<ColoredLine> coloredLines = ColorLinesAndUpdateStatistics(lines);
-
             Write(coloredLines);
         }
 

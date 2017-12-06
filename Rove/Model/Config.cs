@@ -158,7 +158,7 @@ namespace Rove.Model
         {
             try
             {
-                return new Regex(regex);
+                return new Regex(regex, RegexOptions.Compiled);
             }
             catch (ArgumentException ex)
             {
