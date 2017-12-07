@@ -405,13 +405,14 @@ namespace Rove.ViewModel
             }
 
             var now = DateTime.Now;
+            const int SPEED_WINDOW = 3;
             RecentTraffic.Enqueue(new TrafficStat(now, lines.Count, charCount));
-            while ((now - RecentTraffic.First().Time) > TimeSpan.FromSeconds(3))
+            while ((now - RecentTraffic.First().Time) > TimeSpan.FromSeconds(SPEED_WINDOW))
             {
                 RecentTraffic.Dequeue();
             }
 
-            double avgVelocity = RecentTraffic.Select(t => t.Chars).Average();
+            double avgVelocity = RecentTraffic.Select(t => t.Chars).Sum() / SPEED_WINDOW;
             if (RecentTraffic.Count > 2 && avgVelocity > Config.UpdateLimit)
             {
                 DisplayMessageInLogWindow("Too many new log messages for this application. Consider to open the log file with a dedicated log viewer tool. Received " + avgVelocity + " chars in the last second");
