@@ -74,8 +74,6 @@ namespace Rove.ViewModel
 
         private FastColoredTextBoxNS.FastColoredTextBox LogViewer { get; set; }
 
-        private int LineCount { get; set; }
-
         private Queue<TrafficStat> RecentTraffic { get; } = new Queue<TrafficStat>();
 
         private List<string> Backlog { get; } = new List<string>();
@@ -423,7 +421,6 @@ namespace Rove.ViewModel
             if (Config.LogHistory > 0 && lines.Count > Config.LogHistory)
             {
                 LogViewer.Clear();
-                LineCount = 0;
                 startLine = lines.Count - Config.LogHistory;
             }
 
@@ -434,11 +431,9 @@ namespace Rove.ViewModel
 
             if (Config.LogHistory > 0)
             {
-                LineCount += lines.Count;
-                if (LineCount > Config.LogHistory)
+                if (LogViewer.LinesCount > Config.LogHistory)
                 {
-                    LogViewer.RemoveLines(Enumerable.Range(0, LineCount - Config.LogHistory).ToList());
-                    LineCount = Config.LogHistory;
+                    LogViewer.RemoveLines(Enumerable.Range(0, LogViewer.LinesCount - Config.LogHistory).ToList());
                 }
             }
 
