@@ -49,17 +49,41 @@ namespace Rove.Model
 
         public List<Process> GetNewProcesses(List<Process> processes)
         {
-            var newProcesses = 
+            var newProcesses =
                 processes
                 .Where(p => !Processes.Any((s) => s.Id == p.Id && s.StartTime == p.StartTime))
                 .ToList();
 
             Processes =
                 processes
-                .Select(p => new SeenProcess(p.Id, p.StartTime))
+                .SelectMany(SafeConvert)
                 .ToList();
 
             return newProcesses;
+        }
+
+        private static List<SeenProcess> SafeConvert(Process process)
+        {
+            try
+            {
+                return new List<SeenProcess> { new SeenProcess(process.Id, process.StartTime) };
+            }
+            catch (InvalidOperationException)
+            {
+                return new List<SeenProcess>();
+            }
+            catch (PlatformNotSupportedException)
+            {
+                return new List<SeenProcess>();
+            }
+            catch (NotSupportedException)
+            {
+                return new List<SeenProcess>();
+            }
+            catch (Win32Exception)
+            {
+                return new List<SeenProcess>();
+            }
         }
     }
 

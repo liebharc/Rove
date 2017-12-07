@@ -392,7 +392,7 @@ namespace Rove.ViewModel
 
         private void ProcessBacklog()
         {
-            WriteLines(false, Backlog.Select(b => b.Length).Sum(), Backlog);
+            WriteLines(false, Backlog.Select(b => b.Length).Sum() , Backlog);
             Backlog.Clear();
         }
 

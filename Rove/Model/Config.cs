@@ -28,7 +28,7 @@ namespace Rove.Model
                 {
                     OnAnyProcessStartedScript = "StartupScript.ps1",
                     LogHistory = 10000,
-                    UpdateLimit = 5000,
+                    UpdateLimit = 50000,
                     DisplayLayout = string.Empty
                 };
 
@@ -58,7 +58,7 @@ namespace Rove.Model
 
         public int LogHistory { get; set; } = 1000;
 
-        public int UpdateLimit { get; set; } = 5000;
+        public int UpdateLimit { get; set; } = 50000;
 
         public OverallConfigChecked ToOverallConfig()
         {
