@@ -429,8 +429,7 @@ namespace Rove.ViewModel
 
             for (int i = startLine; i < lines.Count; i++)
             {
-                LogViewer.AppendText(lines[i]);
-                LogViewer.AppendText("\n");
+                LogViewer.AppendText(lines[i] + "\n");
             }
 
             if (Config.LogHistory > 0)
