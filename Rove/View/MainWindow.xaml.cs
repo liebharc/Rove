@@ -130,6 +130,8 @@ namespace Rove.View
 
         private void CreateAPanelForEachProcess(IList<TomcatProcessViewModel> processes)
         {
+            var initialPane = LayoutDocumentPaneFindLayoutDocumentPanes(Layout.Layout.Children).First();
+            List<LayoutDocument> documents = new List<LayoutDocument>();
             foreach (var process in processes)
             {
                 var panel = new ProcessInfo { DataContext = process };
@@ -142,30 +144,55 @@ namespace Rove.View
                     ContentId = process.Title
                 };
 
-                Root.Children.Add(document);
+                initialPane.Children.Add(document);
+                documents.Add(document);
             }
 
             RestoreLayout();
-            HandleChildrenWhichAreNotPartOfTheRestoredLayout();
+            HandleChildrenWhichAreNotPartOfTheRestoredLayout(documents);
         }
 
-        private void HandleChildrenWhichAreNotPartOfTheRestoredLayout()
+        private List<LayoutDocumentPane> LayoutDocumentPaneFindLayoutDocumentPanes(IEnumerable<ILayoutElement> elements)
         {
-            var panes =
-                Layout.Layout.Children.OfType<LayoutPanel>()
-                .SelectMany(c => c.Children.OfType<LayoutDocumentPaneGroup>())
-                .SelectMany(c => c.Children.OfType<LayoutDocumentPane>())
-                .ToList();
+            List<LayoutDocumentPane> result = new List<LayoutDocumentPane>();
+            foreach (var element in elements)
+            {
+                var pane = element as LayoutDocumentPane;
+                if (pane != null)
+                {
+                    result.Add(pane);
+                    continue;
+                }
+
+                var panel = element as LayoutPanel;
+                if (panel != null)
+                {
+                    result.AddRange(LayoutDocumentPaneFindLayoutDocumentPanes(panel.Children));
+                    continue;
+                }
+
+                var group = element as LayoutDocumentPaneGroup;
+                if (group != null)
+                {
+                    result.AddRange(LayoutDocumentPaneFindLayoutDocumentPanes(group.Children));
+                    continue;
+                }
+            }
+
+            return result;
+        }
+
+        private void HandleChildrenWhichAreNotPartOfTheRestoredLayout(List<LayoutDocument> documents)
+        {
+            var panes = LayoutDocumentPaneFindLayoutDocumentPanes(Layout.Layout.Children);
             var available =
                 panes
                 .SelectMany(c => c.Children.OfType<LayoutDocument>());
-            var orphans = Root.Children.OfType<LayoutDocument>().Where(d => available.All(a => a.ContentId != d.ContentId)).ToList();
+            var orphans = documents.Where(d => available.All(a => a.ContentId != d.ContentId)).ToList();
             foreach (var orphan in orphans)
             {
-                foreach (var pane in panes)
-                {
-                    pane.Children.Add(orphan);
-                }
+                var pane = panes.First();
+                pane.Children.Add(orphan);
             }
         }
 

@@ -22,7 +22,7 @@
         <xcad:LayoutRoot>
             <xcad:LayoutPanel Orientation="Horizontal">
                 <xcad:LayoutDocumentPaneGroup>
-                    <xcad:LayoutDocumentPane x:Name="Root" />
+                    <xcad:LayoutDocumentPane />
                 </xcad:LayoutDocumentPaneGroup >
             </xcad:LayoutPanel>
         </xcad:LayoutRoot>
