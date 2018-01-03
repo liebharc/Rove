@@ -86,6 +86,7 @@
     </ApplicationDefinition>
     <Compile Include="Model\Config.cs" />
     <Compile Include="Model\LogColors.cs" />
+    <Compile Include="Model\ProcessExtensions.cs" />
     <Compile Include="Model\ProcessUtils.cs" />
     <Compile Include="Model\Result.cs" />
     <Compile Include="Model\Script.cs" />

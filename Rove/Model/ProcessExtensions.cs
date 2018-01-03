@@ -12,7 +12,7 @@ namespace Rove.Model
                 throw new ArgumentNullException(nameof(process));
             }
 
-            return FindPidFromIndexedProcessName(FindIndexedProcessName(process.Id));
+            return FindPidFromIndexedProcessName(FindIndexedProcessName(process));
         }
 
         private static Process FindPidFromIndexedProcessName(string indexedProcessName)
@@ -32,16 +32,16 @@ namespace Rove.Model
             }
         }
 
-        private static string FindIndexedProcessName(int pid)
+        private static string FindIndexedProcessName(Process process)
         {
-            var processName = Process.GetProcessById(pid).ProcessName;
+            var processName = process.ProcessName;
             var processesByName = Process.GetProcessesByName(processName);
             string processIndexedName = null;
             for (int index = 0; index < processesByName.Length; index++)
             {
                 processIndexedName = index == 0 ? processName : processName + "#" + index;
                 var processId = new PerformanceCounter("Process", "ID Process", processIndexedName);
-                if ((int)processId.NextValue() == pid)
+                if ((int)processId.NextValue() == process.Id)
                 {
                     return processIndexedName;
                 }
