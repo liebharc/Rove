@@ -12,10 +12,10 @@ namespace Rove.Model
                 throw new ArgumentNullException(nameof(process));
             }
 
-            return FindPidFromIndexedProcessName(FindIndexedProcessName(process));
+            return FindParentPidFromIndexedProcessName(FindIndexedProcessName(process));
         }
 
-        private static Process FindPidFromIndexedProcessName(string indexedProcessName)
+        private static Process FindParentPidFromIndexedProcessName(string indexedProcessName)
         {
             var parentId = new PerformanceCounter("Process", "Creating Process ID", indexedProcessName);
             try
