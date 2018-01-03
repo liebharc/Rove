@@ -5,22 +5,14 @@ namespace Rove.Model
 {
     internal static class ProcessExtensions
     {
-        private static string FindIndexedProcessName(int pid)
+        public static Process Parent(this Process process)
         {
-            var processName = Process.GetProcessById(pid).ProcessName;
-            var processesByName = Process.GetProcessesByName(processName);
-            string processIndexedName = null;
-            for (int index = 0; index < processesByName.Length; index++)
+            if (process == null)
             {
-                processIndexedName = index == 0 ? processName : processName + "#" + index;
-                var processId = new PerformanceCounter("Process", "ID Process", processIndexedName);
-                if ((int)processId.NextValue() == pid)
-                {
-                    return processIndexedName;
-                }
+                throw new ArgumentNullException(nameof(process));
             }
 
-            return processIndexedName;
+            return FindPidFromIndexedProcessName(FindIndexedProcessName(process.Id));
         }
 
         private static Process FindPidFromIndexedProcessName(string indexedProcessName)
@@ -40,14 +32,22 @@ namespace Rove.Model
             }
         }
 
-        public static Process Parent(this Process process)
+        private static string FindIndexedProcessName(int pid)
         {
-            if (process == null)
+            var processName = Process.GetProcessById(pid).ProcessName;
+            var processesByName = Process.GetProcessesByName(processName);
+            string processIndexedName = null;
+            for (int index = 0; index < processesByName.Length; index++)
             {
-                throw new ArgumentNullException(nameof(process));
+                processIndexedName = index == 0 ? processName : processName + "#" + index;
+                var processId = new PerformanceCounter("Process", "ID Process", processIndexedName);
+                if ((int)processId.NextValue() == pid)
+                {
+                    return processIndexedName;
+                }
             }
 
-            return FindPidFromIndexedProcessName(FindIndexedProcessName(process.Id));
+            return processIndexedName;
         }
     }
 }
