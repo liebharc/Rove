@@ -93,22 +93,65 @@ namespace Rove.Model
                 throw new ArgumentNullException(nameof(process));
             }
 
+            Logger.WriteInfo("Taking control over: " + process.ToDebugString());
+
             var parent = process.Parent();
-            if (parent != null && parent.ProcessName == "cmd")
+            if (parent != null)
             {
-                GuiProcess = parent;
+                Logger.WriteInfo("Found parent process: " + parent.ToDebugString());
+
+                var siblings = 
+                    parent.FindChildren()
+                    .Where(s => s.Id != process.Id)
+                    .ToList();
+                foreach (var sibling in siblings)
+                {
+                    Logger.WriteInfo("Found sibling process: " + sibling.ToDebugString());
+                }
+
+                var children = process.FindChildren();
+                foreach (var child in children)
+                {
+                    Logger.WriteInfo("Found child process: " + child.ToDebugString());
+                }
+
+                const string CONHOST = "conhost";
+                const string CMD = "cmd";
+                if (children.Any(s => s.ProcessName == CONHOST))
+                {
+                    Logger.WriteInfo("This process has conhost process as child, using process directly as GUI process");
+                    GuiProcess = parent;
+                }
+                else if (siblings.Any(s => s.ProcessName == CONHOST))
+                {
+                    Logger.WriteInfo("Parent has conhost process as child, using parent as GUI process");
+                    GuiProcess = parent;
+                }
+                else if (parent.ProcessName == CMD)
+                {
+                    Logger.WriteInfo("Parent process is a cmd process, using parent as GUI process");
+                    GuiProcess = parent;
+                }
+                else
+                {
+                    Logger.WriteInfo("Failed to identify a console host, using process directly as GUI process");
+                    GuiProcess = process;
+                }
             }
             else
             {
+                Logger.WriteInfo("Found no parent process, using process directly as GUI process");
                 GuiProcess = process;
             }
-            
+
             MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(GuiProcess);
 
             WorkerProcess = process;
             CommandLine = commandLine;
             Id = WorkerProcess.Id;
             Hide();
+
+            Logger.WriteInfo("Taking control over: " + process.ToDebugString() + " - done");
         }
 
         private IntPtr WaitForMainWindowHandleToBecomeAvailable(Process process)

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Collections.Generic;
+using System.Management;
 
 namespace Rove.Model
 {
@@ -48,6 +50,39 @@ namespace Rove.Model
             }
 
             return processIndexedName;
+        }
+
+        public static List<Process> FindChildren(this Process parent)
+        {
+            var ids = FindChildProcessIds(parent);
+            var children = new List<Process>();
+            foreach (var id in ids)
+            {
+                children.Add(Process.GetProcessById((int)id));
+            }
+
+            return children;
+        }
+
+        private static List<uint> FindChildProcessIds(Process parent)
+        {
+            ManagementObjectSearcher searcher = new ManagementObjectSearcher(
+            "SELECT * " +
+            "FROM Win32_Process " +
+            "WHERE ParentProcessId=" + parent.Id);
+            ManagementObjectCollection collection = searcher.Get();
+            var children = new List<uint>();
+            foreach (var item in collection)
+            {
+                children.Add((uint)item["ProcessId"]);
+            }
+
+            return children;
+        }
+
+        public static string ToDebugString(this Process process)
+        {
+            return process.Id + "/" + process.ProcessName;
         }
     }
 }
