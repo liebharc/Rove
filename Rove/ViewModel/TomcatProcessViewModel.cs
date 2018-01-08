@@ -248,6 +248,7 @@ namespace Rove.ViewModel
                 try
                 {
                     TryToAttachToTomcatIfIdle(tomcats);
+                    Tomcat?.Update();
                 }
                 catch (LogFileException ex)
                 {
@@ -278,6 +279,7 @@ namespace Rove.ViewModel
             {
                 Tomcat = null;
                 IsVisible = false;
+                DisposeLogFile();
                 OnTomcatChanged();
             }
             else if (LogFile == null)
@@ -319,9 +321,7 @@ namespace Rove.ViewModel
         {
             if (LogFile != null)
             {
-                LogFile.Dispose();
-                LogFile.NewMessagesArrived -= LogFile_NewMessagesArrived;
-                LogFile = null;
+                DisposeLogFile();
             }
 
             if (Config.OnNewProcessScript != null)
@@ -333,6 +333,13 @@ namespace Rove.ViewModel
             {
                 Script.Run(ProcessConfig.OnProcessStartedScript, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
             }
+        }
+
+        private void DisposeLogFile()
+        {
+            LogFile.Dispose();
+            LogFile.NewMessagesArrived -= LogFile_NewMessagesArrived;
+            LogFile = null;
         }
 
         private void StartToReadLogFile()

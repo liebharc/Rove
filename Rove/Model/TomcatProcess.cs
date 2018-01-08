@@ -58,7 +58,7 @@ namespace Rove.Model
 
         private Process GuiProcess { get; set; }
 
-        private IntPtr MainWindowHandle { get; }
+        private IntPtr MainWindowHandle { get; set; }
 
         private bool IsDisposedInternal { get; set; } = false;
 
@@ -182,7 +182,13 @@ namespace Rove.Model
 
         public void Hide()
         {
-            User32.ShowWindow(MainWindowHandle, User32.SW_HIDE);
+            if (MainWindowHandle != IntPtr.Zero)
+            {
+                User32.ShowWindow(MainWindowHandle, User32.SW_HIDE);
+            } else
+            {
+                Logger.WriteInfo("Process " + GuiProcess.Id + " has no main window to hide");
+            }
         }
 
         public void Dispose()
@@ -206,12 +212,23 @@ namespace Rove.Model
                 return false;
             }
 
-            return GuiProcess.Id == other.GuiProcess.Id;
+            return WorkerProcess.Id == other.WorkerProcess.Id;
         }
 
         public override int GetHashCode()
         {
-            return GuiProcess.Id;
+            return WorkerProcess.Id;
+        }
+
+        internal void Update()
+        {
+            if (!IsDisposed && GuiProcess.HasExited)
+            {
+                Logger.WriteInfo("GUI process " + GuiProcess.Id + " has exited, but worker is still available. Hiding worker " + WorkerProcess.Id);
+                GuiProcess = WorkerProcess;
+                MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(GuiProcess);
+                Hide();
+            }
         }
     }
 
