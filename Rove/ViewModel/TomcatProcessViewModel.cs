@@ -279,7 +279,11 @@ namespace Rove.ViewModel
             {
                 Tomcat = null;
                 IsVisible = false;
-                DisposeLogFile();
+                if (LogFile != null)
+                {
+                    DisposeLogFile();
+                }
+
                 OnTomcatChanged();
             }
             else if (LogFile == null)
