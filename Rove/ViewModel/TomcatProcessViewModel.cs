@@ -277,6 +277,8 @@ namespace Rove.ViewModel
             else if (Tomcat.IsDisposed)
             {
                 Tomcat = null;
+				LogFile?.Dispose();
+				LogFile = null;
                 IsVisible = false;
                 OnTomcatChanged();
             }
