@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using Rove.View;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Text;
 using System.Windows;
@@ -187,9 +186,23 @@ namespace Rove.ViewModel
             }
 
             AutoScroll = processConfig.AutoScroll;
-            StartProcess = new LambdaCommand(() => ProcessUtils.Run(processConfig.StartProcessScript).Report());
+            StartProcess = new LambdaCommand(() => 
+                {
+                    if (processConfig != null)
+                    {
+                        ProcessUtils.Run(processConfig.StartProcessScript).Report();
+                    }
+                }
+            );
             Close = new LambdaCommand(() => Tomcat?.Kill());
-            OpenLogFile = new LambdaCommand(() => ProcessUtils.Run("explorer.exe", QuoteDouble(LogFile.File.FullName)).Report());
+            OpenLogFile = new LambdaCommand(() => 
+                {
+                    if (LogFile != null && LogFile.File != null)
+                    {
+                        ProcessUtils.Run("explorer.exe", QuoteDouble(LogFile.File.FullName)).Report();
+                    }
+                }
+            );
             ShowHide = new LambdaCommand(() =>
             {
                 if (IsVisible)
