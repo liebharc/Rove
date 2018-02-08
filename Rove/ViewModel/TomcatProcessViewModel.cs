@@ -173,6 +173,8 @@ namespace Rove.ViewModel
             }
         }
 
+        public TimeSpan LogFileIdleRecheckDuration { get; } = TimeSpan.FromSeconds(60);
+
         public TomcatProcessViewModel(OverallConfigChecked config, ProcessConfigChecked processConfig)
         {
             if (config == null)
@@ -283,7 +285,7 @@ namespace Rove.ViewModel
                 if (Tomcat != null)
                 {
                     OnNewTomcat();
-                    StartToReadLogFile();
+                    StartToReadLogFile(DetermineLogFilePath(), true);
                     IsVisible = false;
                     OnTomcatChanged();
                 }
@@ -301,7 +303,17 @@ namespace Rove.ViewModel
             }
             else if (LogFile == null)
             {
-                StartToReadLogFile();
+                StartToReadLogFile(DetermineLogFilePath(), true);
+            }
+            else if (LogFile != null && LogFile.IsIdle(LogFileIdleRecheckDuration))
+            {
+                LogFile.RememberIdleCheck();
+                var logFile = DetermineLogFilePath();
+                if (File.Exists(logFile) && !new FileInfo(logFile).FullName.Equals(LogFile.File.FullName))
+                {
+                    DisposeLogFile();
+                    StartToReadLogFile(logFile, false);
+                }
             }
         }
 
@@ -359,29 +371,15 @@ namespace Rove.ViewModel
             LogFile = null;
         }
 
-        private void StartToReadLogFile()
+        private void StartToReadLogFile(string file, bool isNewSession)
         {
-            var logResult = Script.Run(ProcessConfig.FindLogFileScript, new[] { QuoteSingle(Tomcat.CommandLine) });
-            if (logResult.Check().IsError)
+            if (!string.IsNullOrEmpty(file))
             {
-                logResult.Check().Report();
-            }
-            else if (logResult.StdOut.Count == 0)
-            {
-                Application.Current.Dispatcher.Invoke(() => DisplayMessageInLogWindow(ProcessConfig.FindLogFileScript+ " didn't return a result yet"));
-            }
-            else if (logResult.StdOut.Count > 1)
-            {
-                throw new LogFileException(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut));
-            }
-            else
-            {
-                var file = logResult.StdOut.First();
                 try
                 {
                     if (File.Exists(file))
                     {
-                        LogFile = new TailLogFile(new FileInfo(file));
+                        LogFile = new TailLogFile(new FileInfo(file), isNewSession);
                         LogFile.NewMessagesArrived += LogFile_NewMessagesArrived;
                         LogFile.Start();
                     }
@@ -395,6 +393,28 @@ namespace Rove.ViewModel
                     throw new LogFileException(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file + " error was " + ex.Message);
                 }
             }
+        }
+
+        private string DetermineLogFilePath()
+        {
+            var logResult = Script.Run(ProcessConfig.FindLogFileScript, new[] { QuoteSingle(Tomcat.CommandLine) });
+            if (logResult.Check().IsError)
+            {
+                logResult.Check().Report();
+                return string.Empty;
+            }
+            else if (logResult.StdOut.Count == 0)
+            {
+                Application.Current.Dispatcher.Invoke(() => DisplayMessageInLogWindow(ProcessConfig.FindLogFileScript + " didn't return a result yet"));
+                return string.Empty;
+            }
+            else if (logResult.StdOut.Count > 1)
+            {
+                throw new LogFileException(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut));
+            }
+
+            var file = logResult.StdOut.First();
+            return file;
         }
 
         private void LogFile_NewMessagesArrived(bool isNewTailSession, int charCount, List<string> lines)

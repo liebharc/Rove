@@ -87,6 +87,7 @@
     <Compile Include="Model\ConfigException.cs" />
     <Compile Include="Model\LogColors.cs" />
     <Compile Include="Model\Logger.cs" />
+    <Compile Include="Model\LogIdleCheck.cs" />
     <Compile Include="Model\OverallConfig.cs" />
     <Compile Include="Model\ProcessExtensions.cs" />
     <Compile Include="Model\ProcessUtils.cs" />
