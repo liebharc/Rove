@@ -120,7 +120,7 @@ namespace Rove.Model
                 if (children.Any(s => s.ProcessName == CONHOST))
                 {
                     Logger.WriteInfo("This process has conhost process as child, using process directly as GUI process");
-                    GuiProcess = parent;
+                    GuiProcess = process;
                 }
                 else if (siblings.Any(s => s.ProcessName == CONHOST))
                 {

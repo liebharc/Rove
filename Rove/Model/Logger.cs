@@ -14,6 +14,7 @@ namespace Rove.Model
 
         public static void WriteInfo(string message)
         {
+            message = DateTime.Now + ": " + message;
             lock (Messages)
             {
                 Messages.Enqueue(message);
