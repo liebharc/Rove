@@ -17,7 +17,7 @@ namespace Rove.Model
 
         private IDictionary<string, string> Mapping { get; } = new Dictionary<string, string>();
 
-        public IEnumerable<string> AvailbleEnvironments => Mapping.Select(m => m.Key);
+        public IEnumerable<string> AvailableEnvironments => Mapping.Select(m => m.Key);
 
         public bool HasMappings => Mapping.Any();
 

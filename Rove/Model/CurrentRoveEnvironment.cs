@@ -10,6 +10,10 @@ namespace Rove.Model
         {
             Environments = environments;
             Selection = currentEnvironment;
+            if (string.IsNullOrEmpty(Selection) && Environments.AvailableEnvironments.Any())
+            {
+                Selection = Environments.AvailableEnvironments.FirstOrDefault();
+            }
         }
 
         private string _selection;
@@ -28,10 +32,10 @@ namespace Rove.Model
 
         private bool IsValid(string selection)
         {
-            return Environments.AvailbleEnvironments.Contains(selection);
+            return Environments.AvailableEnvironments.Contains(selection);
         }
 
-        public IEnumerable<string> AvailbleEnvironments => Environments.AvailbleEnvironments;
+        public IEnumerable<string> AvailbleEnvironments => Environments.AvailableEnvironments;
 
         private RoveEnvironments Environments { get; }
 
