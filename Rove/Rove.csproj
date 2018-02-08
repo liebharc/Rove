@@ -105,9 +105,17 @@
     <Compile Include="ViewModel\ResultReporter.cs" />
     <Compile Include="ViewModel\TomcatProcessViewModel.cs" />
     <Compile Include="ViewModel\TomcatProcessViewModelCollection.cs" />
+    <Compile Include="ViewModel\TopViewModel.cs" />
+    <Compile Include="View\DisplayInternalLog.xaml.cs">
+      <DependentUpon>DisplayInternalLog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\ProcessInfo.xaml.cs">
       <DependentUpon>ProcessInfo.xaml</DependentUpon>
     </Compile>
+    <Page Include="View\DisplayInternalLog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

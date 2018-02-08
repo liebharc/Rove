@@ -7,8 +7,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:local="clr-namespace:Rove.View"
+        Icon="../Bug.ico"
         mc:Ignorable="d"
         Title="Rove" Height="350" Width="525">
+    <controls:MetroWindow.RightWindowCommands>
+        <controls:WindowCommands HorizontalAlignment="Stretch">
+            <Grid HorizontalAlignment="Stretch" Name="TopBar">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Column="0"/>
+                <Button Content="?" Grid.Column="2" Command="{Binding Help}" />
+            </Grid>
+        </controls:WindowCommands>
+    </controls:MetroWindow.RightWindowCommands>
     <xcad:DockingManager AllowMixedOrientation="True" x:Name="Layout">
         <xcad:DockingManager.DocumentHeaderTemplate>
             <DataTemplate>

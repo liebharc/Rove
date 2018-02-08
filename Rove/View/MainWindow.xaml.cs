@@ -91,6 +91,7 @@ namespace Rove.View
         public MainWindow()
         {
             InitializeComponent();
+            TopBar.DataContext = new TopViewModel();
             OverallConfigChecked config = null;
             UserConfig user = UserConfig.DefaultConfig;
             try
