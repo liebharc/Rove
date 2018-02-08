@@ -53,7 +53,7 @@ namespace Rove.View
 
         private static string GetUserConfigFileName()
         {
-            return GetAuxFileBaseName() + "Display.xml";
+            return GetAuxFileBaseName() + "User.xml";
         }
 
         private static OverallConfig LoadConfig()
