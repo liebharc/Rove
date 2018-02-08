@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
 using System.Xml.Serialization;
@@ -16,8 +17,7 @@ namespace Rove.Model
                 {
                     OnAnyProcessStartedScript = "StartupScript.ps1",
                     LogHistory = 10000,
-                    UpdateLimit = 50000,
-                    DisplayLayout = string.Empty
+                    UpdateLimit = 50000
                 };
 
                 var process = new ProcessConfig
@@ -29,16 +29,13 @@ namespace Rove.Model
                     OnProcessStartedScript = "OnProcessStartedScript.ps1",
                     FindLogFileScript = "FindLogFileScript.ps1",
                     IsKnownProcess= ".*",
-                    StartProcessScript ="StartProcessScript.ps1",
-                    AutoScroll = true
+                    StartProcessScript ="StartProcessScript.ps1"
                 };
 
                 config.ProcessConfigs.Add(process);
                 return config;
             }
         }
-
-        public string DisplayLayout { get; set; } = string.Empty;
 
         public string OnAnyProcessStartedScript { get; set; } = string.Empty;
 
@@ -48,32 +45,32 @@ namespace Rove.Model
 
         public int UpdateLimit { get; set; } = 50000;
 
-        public OverallConfigChecked ToOverallConfig()
+        public OverallConfigChecked ToOverallConfig(UserConfig userSerialized)
         {
-            return new OverallConfigChecked(this);
+            return new OverallConfigChecked(this, userSerialized);
         }
     }
 
     public class OverallConfigChecked
     {
-        public OverallConfigChecked(OverallConfig ser)
+        public OverallConfigChecked(OverallConfig serialized, UserConfig userSerialized)
         {
-            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(ser.OnAnyProcessStartedScript), ser.OnAnyProcessStartedScript);
-            DisplayLayout = ser.DisplayLayout;
-            LogHistory = ser.LogHistory;
+            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(serialized.OnAnyProcessStartedScript), serialized.OnAnyProcessStartedScript);
+            LogHistory = serialized.LogHistory;
             if (LogHistory < 0)
             {
                 throw new ConfigException(nameof(OverallConfig), nameof(LogHistory));
             }
-            UpdateLimit = ser.UpdateLimit;
+            UpdateLimit = serialized.UpdateLimit;
             if (UpdateLimit < 0)
             {
                 throw new ConfigException(nameof(OverallConfig), nameof(UpdateLimit));
             }
 
-            foreach (var s in ser.ProcessConfigs)
+            foreach (var s in serialized.ProcessConfigs)
             {
-                ProcessConfigs.Add(s.ToProcessConfig());
+                var userConfig = userSerialized.ProcessConfigs.FirstOrDefault(p => p.ProcessName == s.ProcessName);
+                ProcessConfigs.Add(s.ToProcessConfig(userConfig));
             }
         }
 
@@ -104,33 +101,31 @@ namespace Rove.Model
 
         public string Color { get; set; } = string.Empty;
 
-        public bool AutoScroll { get; set; } = true;
-
-        public ProcessConfigChecked ToProcessConfig()
+        public ProcessConfigChecked ToProcessConfig(ProcessUserConfig userSerialized)
         {
-            return new ProcessConfigChecked(this);
+            return new ProcessConfigChecked(this, userSerialized);
         }
     }
 
     public class ProcessConfigChecked
     {
-        public ProcessConfigChecked(ProcessConfig ser)
+        public ProcessConfigChecked(ProcessConfig serialized, ProcessUserConfig userSerialized)
         {
-            if (string.IsNullOrEmpty(ser.ProcessName))
+            if (string.IsNullOrEmpty(serialized.ProcessName))
             {
-                throw new ArgumentException("Unnamed section", nameof(ser.ProcessName));
+                throw new ArgumentException("Unnamed section", nameof(serialized.ProcessName));
             }
 
-            ProcessName = ser.ProcessName;
-            WarningMessage = Converstions.CompileRegex(ser.ProcessName, nameof(ser.WarningMessage), ser.WarningMessage);
-            ErrorMessage = Converstions.CompileRegex(ser.ProcessName, nameof(ser.ErrorMessage), ser.ErrorMessage);
-            StartupMessage = Converstions.CompileRegex(ser.ProcessName, nameof(ser.StartupMessage), ser.StartupMessage);
-            OnProcessStartedScript = Converstions.GetOptionalPath(ser.ProcessName, nameof(ser.OnProcessStartedScript), ser.OnProcessStartedScript);
-            FindLogFileScript = Converstions.GetMandatoryPath(ser.ProcessName, nameof(ser.FindLogFileScript), ser.FindLogFileScript);
-            IsKnownProcess = Converstions.CompileRegex(ser.ProcessName, nameof(ser.IsKnownProcess), ser.IsKnownProcess);
-            StartProcessScript = Converstions.GetMandatoryPath(ser.ProcessName, nameof(ser.StartProcessScript), ser.StartProcessScript);
-            Color = Converstions.GetColor(ser.ProcessName, nameof(ser.Color), ser.Color);
-            AutoScroll = ser.AutoScroll;
+            ProcessName = serialized.ProcessName;
+            WarningMessage = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.WarningMessage), serialized.WarningMessage);
+            ErrorMessage = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.ErrorMessage), serialized.ErrorMessage);
+            StartupMessage = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.StartupMessage), serialized.StartupMessage);
+            OnProcessStartedScript = Converstions.GetOptionalPath(serialized.ProcessName, nameof(serialized.OnProcessStartedScript), serialized.OnProcessStartedScript);
+            FindLogFileScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.FindLogFileScript), serialized.FindLogFileScript);
+            IsKnownProcess = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.IsKnownProcess), serialized.IsKnownProcess);
+            StartProcessScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.StartProcessScript), serialized.StartProcessScript);
+            Color = Converstions.GetColor(serialized.ProcessName, nameof(serialized.Color), serialized.Color);
+            AutoScroll = userSerialized != null ? userSerialized.AutoScroll : true;
         }
 
         public string ProcessName { get; } 
@@ -151,7 +146,7 @@ namespace Rove.Model
 
         public Color Color { get; }
 
-        public bool AutoScroll { get; }
+        public bool AutoScroll { get; set; }
     }
 
     public static class Converstions
@@ -221,9 +216,9 @@ namespace Rove.Model
 
     public static class ConfigSerializer
     {
-        public static string ConfigToText(OverallConfig config)
+        public static string ConfigToText<T>(T config)
         {
-            XmlSerializer xml = new XmlSerializer(typeof(OverallConfig));
+            XmlSerializer xml = new XmlSerializer(typeof(T));
             using (StringWriter stringWriter = new StringWriter())
             {
                 xml.Serialize(stringWriter, config);
@@ -231,12 +226,12 @@ namespace Rove.Model
             }
         }
 
-        public static OverallConfig TextToConfig(string config)
+        public static T TextToConfig<T>(string config)
         {
-            XmlSerializer xml = new XmlSerializer(typeof(OverallConfig));
+            XmlSerializer xml = new XmlSerializer(typeof(T));
             using (StringReader stringReader = new StringReader(config))
             {
-                return (OverallConfig)xml.Deserialize(stringReader);
+                return (T)xml.Deserialize(stringReader);
             }
         }
     }
