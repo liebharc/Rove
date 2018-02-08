@@ -158,9 +158,23 @@ namespace Rove.Model
         {
             IntPtr mainWindowHandle = process.MainWindowHandle;
             DateTime start = DateTime.Now;
-            while (MainWindowHandle == IntPtr.Zero && DateTime.Now - start < TimeSpan.FromMilliseconds(200))
+            while (mainWindowHandle == IntPtr.Zero && DateTime.Now - start < TimeSpan.FromMilliseconds(200))
             {
                 mainWindowHandle = process.MainWindowHandle;
+            }
+
+            if (mainWindowHandle == IntPtr.Zero)
+            {
+                var windows = GetRootWindowsOfProcess(GuiProcess.Id);
+                if (windows.Count == 1)
+                {
+                    mainWindowHandle = windows.First();
+                    Logger.WriteInfo("Regular window detection failed, but fallback succeeded for process: " + process.Id);
+                }
+                else
+                {
+                    Logger.WriteInfo("Failed to find window for process: " + process.Id);
+                }
             }
 
             return mainWindowHandle;
@@ -230,6 +244,49 @@ namespace Rove.Model
                 Hide();
             }
         }
+
+        private static List<IntPtr> GetRootWindowsOfProcess(int pid)
+        {
+            List<IntPtr> rootWindows = GetChildWindows(IntPtr.Zero);
+            List<IntPtr> dsProcRootWindows = new List<IntPtr>();
+            foreach (IntPtr hWnd in rootWindows)
+            {
+                uint lpdwProcessId;
+                User32.GetWindowThreadProcessId(hWnd, out lpdwProcessId);
+                if (lpdwProcessId == pid)
+                    dsProcRootWindows.Add(hWnd);
+            }
+            return dsProcRootWindows;
+        }
+
+        private static List<IntPtr> GetChildWindows(IntPtr parent)
+        {
+            List<IntPtr> result = new List<IntPtr>();
+            GCHandle listHandle = GCHandle.Alloc(result);
+            try
+            {
+                User32.Win32Callback childProc = new User32.Win32Callback(EnumWindow);
+                User32.EnumChildWindows(parent, childProc, GCHandle.ToIntPtr(listHandle));
+            }
+            finally
+            {
+                if (listHandle.IsAllocated)
+                    listHandle.Free();
+            }
+            return result;
+        }
+
+        private static bool EnumWindow(IntPtr handle, IntPtr pointer)
+        {
+            GCHandle gch = GCHandle.FromIntPtr(pointer);
+            List<IntPtr> list = gch.Target as List<IntPtr>;
+            if (list == null)
+            {
+                throw new InvalidCastException("GCHandle Target could not be cast as List<IntPtr>");
+            }
+            list.Add(handle);
+            return true;
+        }
     }
 
     internal static class User32
@@ -240,5 +297,14 @@ namespace Rove.Model
         internal const int SW_HIDE = 0;
 
         internal const int SW_SHOW = 5;
+
+        [DllImport("user32.dll")]
+        public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        [DllImport("user32.Dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool EnumChildWindows(IntPtr parentHandle, Win32Callback callback, IntPtr lParam);
+
+        public delegate bool Win32Callback(IntPtr hwnd, IntPtr lParam);
     }
 }
