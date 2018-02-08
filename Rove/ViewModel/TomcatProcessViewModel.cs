@@ -357,17 +357,7 @@ namespace Rove.ViewModel
             if (Config.SetRoveEnvScript != null)
             {
                 var result = Script.Run(Config.SetRoveEnvScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) });
-                result.Check().Report();
-                if (result.StdOut.Count == 1)
-                {
-                    var newEnv = result.StdOut.First();
-                    Logger.WriteInfo("SetRoveEnvScript set env to " + newEnv);
-                    CurrentEnvironment.Selection = newEnv;
-                }
-                else if (result.StdOut.Any())
-                {
-                    Logger.WriteInfo("SetRoveEnvScript was chattier than expected: " + string.Join("\n",  result.StdOut));
-                }
+                SetRoveEnv(result);
             }
 
             if (Config.OnNewProcessScript != null)
@@ -378,6 +368,21 @@ namespace Rove.ViewModel
             if (ProcessConfig.OnProcessStartedScript != null)
             {
                 Script.Run(ProcessConfig.OnProcessStartedScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
+            }
+        }
+
+        private void SetRoveEnv(Script.ScriptResult result)
+        {
+            result.Check().Report();
+            if (result.StdOut.Count == 1)
+            {
+                var newEnv = result.StdOut.First();
+                Logger.WriteInfo("SetRoveEnvScript set env to " + newEnv);
+                CurrentEnvironment.Selection = newEnv;
+            }
+            else if (result.StdOut.Any())
+            {
+                Logger.WriteInfo("SetRoveEnvScript was chattier than expected: " + string.Join("\n", result.StdOut));
             }
         }
 
