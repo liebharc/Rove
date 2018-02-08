@@ -28,7 +28,7 @@ namespace Rove.View
         }
     }
 
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
         private static void CreateDefaultConfigFile()
         {
