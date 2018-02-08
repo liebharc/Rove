@@ -44,7 +44,7 @@ namespace Rove.ViewModel
         private OverallConfigChecked Config { get; }
 
         private ProcessConfigChecked ProcessConfig { get; }
-
+        public CurrentRoveEnvironment CurrentEnvironment { get; }
         public ICommand Close { get; }
 
         public ICommand ShowHide { get; }
@@ -175,7 +175,7 @@ namespace Rove.ViewModel
 
         public TimeSpan LogFileIdleRecheckDuration { get; } = TimeSpan.FromSeconds(60);
 
-        public TomcatProcessViewModel(OverallConfigChecked config, ProcessConfigChecked processConfig)
+        public TomcatProcessViewModel(OverallConfigChecked config, ProcessConfigChecked processConfig, CurrentRoveEnvironment currentEnvironment)
         {
             if (config == null)
             {
@@ -188,11 +188,12 @@ namespace Rove.ViewModel
             }
 
             AutoScroll = processConfig.AutoScroll;
+            CurrentEnvironment = currentEnvironment;
             StartProcess = new LambdaCommand(() => 
                 {
                     if (processConfig != null)
                     {
-                        ProcessUtils.Run(processConfig.StartProcessScript).Report();
+                        ProcessUtils.Run(processConfig.StartProcessScript, CurrentEnvironment).Report();
                     }
                 }
             );
@@ -353,14 +354,30 @@ namespace Rove.ViewModel
                 DisposeLogFile();
             }
 
+            if (Config.SetRoveEnvScript != null)
+            {
+                var result = Script.Run(Config.SetRoveEnvScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) });
+                result.Check().Report();
+                if (result.StdOut.Count == 1)
+                {
+                    var newEnv = result.StdOut.First();
+                    Logger.WriteInfo("SetRoveEnvScript set env to " + newEnv);
+                    CurrentEnvironment.Selection = newEnv;
+                }
+                else if (result.StdOut.Any())
+                {
+                    Logger.WriteInfo("SetRoveEnvScript was chattier than expected: " + string.Join("\n",  result.StdOut));
+                }
+            }
+
             if (Config.OnNewProcessScript != null)
             {
-                Script.Run(Config.OnNewProcessScript, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
+                Script.Run(Config.OnNewProcessScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
             }
 
             if (ProcessConfig.OnProcessStartedScript != null)
             {
-                Script.Run(ProcessConfig.OnProcessStartedScript, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
+                Script.Run(ProcessConfig.OnProcessStartedScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
             }
         }
 
@@ -397,7 +414,7 @@ namespace Rove.ViewModel
 
         private string DetermineLogFilePath()
         {
-            var logResult = Script.Run(ProcessConfig.FindLogFileScript, new[] { QuoteSingle(Tomcat.CommandLine) });
+            var logResult = Script.Run(ProcessConfig.FindLogFileScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) });
             if (logResult.Check().IsError)
             {
                 logResult.Check().Report();

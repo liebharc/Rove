@@ -18,7 +18,10 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <ComboBox Grid.Column="0"/>
+                <ComboBox Grid.Column="0" 
+                          Visibility="{Binding EnvironmentVisibility}" 
+                          ItemsSource="{Binding Environments}" 
+                          SelectedItem="{Binding CurrentEnvironment}"/>
                 <Button Content="?" Grid.Column="2" Command="{Binding Help}" />
             </Grid>
         </controls:WindowCommands>

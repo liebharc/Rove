@@ -89,6 +89,17 @@ namespace Rove.Model
 
     public static class ProcessUtils
     {
+        public static Result Run(ScriptPath path, CurrentRoveEnvironment environment, string arguments = null)
+        {
+            try
+            {
+                return Run(path.ResolvePath(environment).FullName, arguments);
+            } catch (FileNotFoundException ex)
+            {
+                return Result.Error(ex.Message);
+            }
+        }
+
         public static Result Run(FileInfo path, string arguments = null)
         {
             return Run(path.FullName, arguments);

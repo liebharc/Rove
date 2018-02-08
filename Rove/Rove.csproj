@@ -91,6 +91,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Model\ConfigException.cs" />
+    <Compile Include="Model\CurrentRoveEnvironment.cs" />
     <Compile Include="Model\LogColors.cs" />
     <Compile Include="Model\Logger.cs" />
     <Compile Include="Model\LogIdleCheck.cs" />
@@ -98,7 +99,9 @@
     <Compile Include="Model\ProcessExtensions.cs" />
     <Compile Include="Model\ProcessUtils.cs" />
     <Compile Include="Model\Result.cs" />
+    <Compile Include="Model\RoveEnvironment.cs" />
     <Compile Include="Model\Script.cs" />
+    <Compile Include="Model\ScriptPath.cs" />
     <Compile Include="Model\TailLogFile.cs" />
     <Compile Include="Model\UserConfig.cs" />
     <Compile Include="ViewModel\LambdaCommand.cs" />

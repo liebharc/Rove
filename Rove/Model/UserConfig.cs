@@ -14,6 +14,8 @@ namespace Rove.Model
 
         public string DisplayLayout { get; set; } = string.Empty;
 
+        public string CurrentRoveEnvironment { get; set; } = string.Empty;
+
         public List<ProcessUserConfig> ProcessConfigs { get; set; } = new List<ProcessUserConfig>();
     }
 

@@ -34,6 +34,24 @@ namespace Rove.Model
                 });
             }
 
+            public ScriptResult(int exitCode, string stdOut, string stdErr)
+            {
+                ExitCode = exitCode;
+                StdOutLinesLazy = new Lazy<List<string>>(() =>
+                {
+                    List<string> result = new List<string>();
+                    result.Add(stdOut);
+                    return result;
+                });
+
+                StdErrLinesLazy = new Lazy<List<string>>(() =>
+                {
+                    List<string> result = new List<string>();
+                    result.Add(stdErr);
+                    return result;
+                });
+            }
+
             public int ExitCode { get; }
             private Lazy<List<string>> StdOutLinesLazy { get; }
             private Lazy<List<string>> StdErrLinesLazy { get; }
@@ -53,6 +71,18 @@ namespace Rove.Model
                 }
 
                 return Result.Success;
+            }
+        }
+
+        public static ScriptResult Run(ScriptPath script, CurrentRoveEnvironment roveEnvironment, IEnumerable<string> arguments = null, IDictionary<string, string> environment = null)
+        {
+            try
+            {
+                return Run(script.ResolvePath(roveEnvironment), arguments, environment);
+            }
+            catch (FileNotFoundException ex)
+            {
+                return new ScriptResult(999, string.Empty, ex.Message);
             }
         }
 

@@ -10,7 +10,7 @@ namespace Rove.ViewModel
 
         private SeenProcessList SeenProcessList { get; } = new SeenProcessList();
 
-        public TomcatProcessViewModelCollection(OverallConfigChecked config)
+        public TomcatProcessViewModelCollection(OverallConfigChecked config, CurrentRoveEnvironment currentEnvironment)
         {
             if (config == null)
             {
@@ -19,7 +19,7 @@ namespace Rove.ViewModel
             
             foreach (var process in config.ProcessConfigs)
             {
-                Processes.Add(new TomcatProcessViewModel(config, process));
+                Processes.Add(new TomcatProcessViewModel(config, process, currentEnvironment));
             }
         }
 

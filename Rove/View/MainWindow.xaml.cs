@@ -88,10 +88,11 @@ namespace Rove.View
 
         private bool IsDisposed { get; set; } = false;
 
+        private CurrentRoveEnvironment CurrentRoveEnvironment { get; }
+
         public MainWindow()
         {
             InitializeComponent();
-            TopBar.DataContext = new TopViewModel();
             OverallConfigChecked config = null;
             UserConfig user = UserConfig.DefaultConfig;
             try
@@ -106,7 +107,11 @@ namespace Rove.View
                 Result.Error(ex.Message).Report();
                 Environment.Exit(0);
             }
-            TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection(config);
+
+            var topModel = new TopViewModel(config.RoveEnvironments, user.CurrentRoveEnvironment);
+            TopBar.DataContext = topModel;
+            TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection(config, topModel.CurrentRoveEnvironment);
+            CurrentRoveEnvironment = topModel.CurrentRoveEnvironment;
             CreateAPanelForEachProcess(viewModel.Processes, user);
 
             DataContext = viewModel;
@@ -142,7 +147,8 @@ namespace Rove.View
                 var config = new UserConfig
                 {
                     DisplayLayout = StoreCurrentLayout(),
-                    ProcessConfigs = StoreCurrentAutoScrollValues()
+                    ProcessConfigs = StoreCurrentAutoScrollValues(),
+                    CurrentRoveEnvironment = CurrentRoveEnvironment.Selection
                 };
                 WriteConfigFile(config, GetUserConfigFileName());
                 IsDisposed = true;
