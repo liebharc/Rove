@@ -89,23 +89,28 @@ namespace Rove.Model
 
     public static class ProcessUtils
     {
+        public const DirectoryInfo DefaultWorkingDir = null;
+
         public static Result Run(ScriptPath path, CurrentRoveEnvironment environment, string arguments = null)
         {
             try
             {
-                return Run(path.ResolvePath(environment).FullName, arguments);
+                return Run(
+                    path.ResolvePath(environment).FullName,
+                    path.ResolveWorkingDir(environment),
+                    arguments ?? path.ResolveArguments(environment));
             } catch (FileNotFoundException ex)
             {
                 return Result.Error(ex.Message);
             }
         }
 
-        public static Result Run(FileInfo path, string arguments = null)
+        public static Result Run(FileInfo path, DirectoryInfo workingDir, string arguments = null)
         {
-            return Run(path.FullName, arguments);
+            return Run(path.FullName, workingDir, arguments);
         }
 
-        public static Result Run(string command, string arguments = null)
+        public static Result Run(string command, DirectoryInfo workingDir, string arguments = null)
         {
             try
             {
@@ -114,7 +119,18 @@ namespace Rove.Model
                     arguments = string.Empty;
                 }
 
-                Process.Start(command, arguments);
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = command,
+                    Arguments = arguments
+                };
+
+                if (workingDir != null)
+                {
+                    startInfo.WorkingDirectory = workingDir.FullName;
+                }
+
+                Process.Start(startInfo);
                 return Result.Success;
             }
             catch (Win32Exception ex)

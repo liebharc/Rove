@@ -14,6 +14,23 @@ namespace Rove.Model
         public string Value { get; set; }
     }
 
+    public class Executable
+    {
+        public Executable() { }
+
+        public Executable(string path) { Path = path; }
+
+        public string Path { get; set; } = string.Empty;
+        public string Arguments { get; set; } = string.Empty;
+        public string WorkingDir { get; set; } = string.Empty;
+
+        public void Trim()
+        {
+            Path = Path.Trim(new[] { '"' });
+            WorkingDir = WorkingDir.Trim(new[] { '"' });
+        }
+    }
+
     public class OverallConfig
     {
         public static OverallConfig DefaultConfig { 
@@ -21,8 +38,8 @@ namespace Rove.Model
             {
                 var config = new OverallConfig
                 {
-                    OnAnyProcessStartedScript = "StartupScript.ps1",
-                    SetRoveEnvScript = "SetRoveEnvScript.ps1",
+                    OnAnyProcessStartedScript = new Executable("StartupScript.ps1"),
+                    SetRoveEnvScript = new Executable("SetRoveEnvScript.ps1"),
                     LogHistory = 10000,
                     UpdateLimit = 50000
                 };
@@ -35,10 +52,10 @@ namespace Rove.Model
                     ErrorMessage = ".*ERROR.*",
                     WarningMessage = ".*WARN.*",
                     StartupMessage = ".*started.*",
-                    OnProcessStartedScript = "OnProcessStartedScript.ps1",
-                    FindLogFileScript = "FindLogFileScript.ps1",
+                    OnProcessStartedScript = new Executable("OnProcessStartedScript.ps1"),
+                    FindLogFileScript = new Executable("FindLogFileScript.ps1"),
                     IsKnownProcess= ".*",
-                    StartProcessScript ="StartProcessScript.ps1"
+                    StartProcessScript = new Executable("StartProcessScript.ps1")
                 };
 
                 config.ProcessConfigs.Add(process);
@@ -46,9 +63,9 @@ namespace Rove.Model
             }
         }
 
-        public string OnAnyProcessStartedScript { get; set; } = string.Empty;
+        public Executable OnAnyProcessStartedScript { get; set; } = new Executable();
 
-        public string SetRoveEnvScript { get; set; } = string.Empty;
+        public Executable SetRoveEnvScript { get; set; } = new Executable();
 
         public List<ProcessConfig> ProcessConfigs { get; } = new List<ProcessConfig>();
 
@@ -106,13 +123,13 @@ namespace Rove.Model
 
         public string ErrorMessage { get; set; } = string.Empty;
 
-        public string OnProcessStartedScript { get; set; } = string.Empty;
+        public Executable OnProcessStartedScript { get; set; } = new Executable();
 
-        public string FindLogFileScript { get; set; } = string.Empty;
+        public Executable FindLogFileScript { get; set; } = new Executable();
 
         public string IsKnownProcess { get; set; } = string.Empty;
 
-        public string StartProcessScript { get; set; } = string.Empty;
+        public Executable StartProcessScript { get; set; } = new Executable();
 
         public string StartupMessage { get; set; } = string.Empty;
 
@@ -191,26 +208,31 @@ namespace Rove.Model
             }
         }
 
-        public static ScriptPath GetOptionalPath(string section, string argName, string path, RoveEnvironments environments)
+        public static ScriptPath GetOptionalPath(string section, string argName, Executable executable, RoveEnvironments environments)
         {
-            path = path.Trim(new[] { '"' });
-            if (string.IsNullOrEmpty(path))
+            if (executable == null)
             {
                 return null;
             }
 
-            return GetMandatoryPath(section, argName, path, environments);
+            executable.Trim();
+            if (string.IsNullOrEmpty(executable.Path))
+            {
+                return null;
+            }
+
+            return GetMandatoryPath(section, argName, executable, environments);
         }
 
-        public static ScriptPath GetMandatoryPath(string section, string argName, string path, RoveEnvironments environments)
+        public static ScriptPath GetMandatoryPath(string section, string argName, Executable executable, RoveEnvironments environments)
         {
-            path = path.Trim(new[] { '"' });
-            if (string.IsNullOrEmpty(path))
+            executable.Trim();
+            if (string.IsNullOrEmpty(executable.Path))
             {
                 throw new ConfigException(section, argName);
             }
 
-            var scriptPath = new ScriptPath(path, environments);
+            var scriptPath = new ScriptPath(executable, environments);
             if (!scriptPath.Exists)
             {
                 throw new ConfigException(section, argName);

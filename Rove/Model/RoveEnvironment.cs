@@ -38,6 +38,11 @@ namespace Rove.Model
 
         public string MapSelected(string path, CurrentRoveEnvironment current)
         {
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
+
             var selection = current.Selection;
             if (!Mapping.ContainsKey(selection))
             {

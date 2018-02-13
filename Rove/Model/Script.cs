@@ -78,7 +78,19 @@ namespace Rove.Model
         {
             try
             {
-                return Run(script.ResolvePath(roveEnvironment), arguments, environment);
+                if (arguments == null)
+                {
+                    var scriptDefaultArg = script.ResolveArguments(roveEnvironment);
+                    if (!string.IsNullOrEmpty(scriptDefaultArg))
+                    {
+                        arguments = new string[] { scriptDefaultArg };
+                    }
+                }
+                return Run(
+                    script.ResolvePath(roveEnvironment), 
+                    script.ResolveWorkingDir(roveEnvironment),
+                    arguments, 
+                    environment);
             }
             catch (FileNotFoundException ex)
             {
@@ -86,23 +98,27 @@ namespace Rove.Model
             }
         }
 
-        public static ScriptResult Run(FileInfo script, IEnumerable<string> arguments = null, IDictionary<string, string> environment = null)
+        public static ScriptResult Run(FileInfo script, DirectoryInfo workingDir, IEnumerable<string> arguments = null, IDictionary<string, string> environment = null)
         {
             if (script.Extension == ".ps1")
             {
-                return RunPowerShell(script, arguments, environment);
+                return RunPowerShell(script, workingDir, arguments, environment);
             }
 
-            return RunCmdOrExe(script, arguments, environment);
+            return RunCmdOrExe(script, workingDir, arguments, environment);
         }
 
-        private static ScriptResult RunCmdOrExe(FileInfo script, IEnumerable<string> arguments, IDictionary<string, string> environment)
+        private static ScriptResult RunCmdOrExe(FileInfo script, DirectoryInfo workingDir, IEnumerable<string> arguments, IDictionary<string, string> environment)
         {
             var ps = new ProcessStartInfo();
             ps.FileName = script.FullName;
             if (arguments != null)
             {
                 ps.Arguments = string.Join(" ", arguments);
+            }
+            if (workingDir != null)
+            {
+                ps.WorkingDirectory = workingDir.FullName;
             }
 
             SetEnvironment(environment, ps);
@@ -132,13 +148,17 @@ namespace Rove.Model
             }
         }
 
-        private static ScriptResult RunPowerShell(FileInfo script, IEnumerable<string> arguments, IDictionary<string, string> environment)
+        private static ScriptResult RunPowerShell(FileInfo script, DirectoryInfo workingDir, IEnumerable<string> arguments, IDictionary<string, string> environment)
         {
             var ps = new ProcessStartInfo();
             ps.FileName = "powershell";
             if (arguments != null)
             {
                 ps.Arguments = script + " " + string.Join(" ", arguments);
+            }
+            if (workingDir != null)
+            {
+                ps.WorkingDirectory = workingDir.FullName;
             }
 
             SetEnvironment(environment, ps);

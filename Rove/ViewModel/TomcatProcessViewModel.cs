@@ -202,7 +202,7 @@ namespace Rove.ViewModel
                 {
                     if (LogFile != null && LogFile.File != null)
                     {
-                        ProcessUtils.Run("explorer.exe", QuoteDouble(LogFile.File.FullName)).Report();
+                        ProcessUtils.Run("explorer.exe", ProcessUtils.DefaultWorkingDir, QuoteDouble(LogFile.File.FullName)).Report();
                     }
                 }
             );
