@@ -48,7 +48,7 @@ namespace Rove.Model
                 return;
             }
 
-            Reader = new Thread(Read);
+            Reader = new Thread(Read) { IsBackground = true };
             Reader.Start();
         }
 

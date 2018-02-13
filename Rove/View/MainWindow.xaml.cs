@@ -117,7 +117,7 @@ namespace Rove.View
             DataContext = viewModel;
             Closed += MainWindow_Closed;
 
-            UpdateThread = new Thread((_) => Update(viewModel));
+            UpdateThread = new Thread((_) => Update(viewModel)) { IsBackground = true };
             UpdateThread.Start();
         }
 
