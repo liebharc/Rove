@@ -469,6 +469,7 @@ namespace Rove.ViewModel
                 return;
             }
 
+
             int startLine = 0;
             if (Config.LogHistory > 0 && lines.Count > Config.LogHistory)
             {
@@ -489,10 +490,7 @@ namespace Rove.ViewModel
                 }
             }
 
-            if (UpdateEnabled)
-            {
-                GoEndWhileKeepingHorizontalPosition(LogViewer);
-            }
+            GoEndWhileKeepingHorizontalPosition(LogViewer);
         }
 
         private void GoEndWhileKeepingHorizontalPosition(FastColoredTextBox viewer)
