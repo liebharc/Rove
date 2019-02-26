@@ -9,6 +9,7 @@ using Rove.View;
 using System.Windows.Media;
 using System.Text;
 using System.Windows;
+using FastColoredTextBoxNS;
 
 namespace Rove.ViewModel
 {
@@ -490,8 +491,16 @@ namespace Rove.ViewModel
 
             if (UpdateEnabled)
             {
-                LogViewer.GoEnd();
+                GoEndWhileKeepingHorizontalPosition(LogViewer);
             }
+        }
+
+        private void GoEndWhileKeepingHorizontalPosition(FastColoredTextBox viewer)
+        {
+            var value = viewer.HorizontalScroll.Value;
+            viewer.GoEnd();
+            viewer.HorizontalScroll.Value = value;
+            viewer.UpdateScrollbars();
         }
 
         private void DisplayMessageInLogWindow(string message)
