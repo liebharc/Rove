@@ -9,6 +9,12 @@ using System.Xml.Serialization;
 
 namespace Rove.Model
 {
+    public class EnvironmentEntrySearch
+    {
+        public string BaseFolder { get; set; } = string.Empty;
+        public string GitRepo { get; set; } = string.Empty;
+    }
+
     public class EnvironmentEntry
     {
         public string Key { get; set; }
@@ -76,6 +82,8 @@ namespace Rove.Model
 
         public List<ProcessConfig> ProcessConfigs { get; } = new List<ProcessConfig>();
 
+        public EnvironmentEntrySearch RoveEnvironmentBase { get; set; } = new EnvironmentEntrySearch();
+
         public List<EnvironmentEntry> RoveEnvironment { get; } = new List<EnvironmentEntry>();
 
         public int LogHistory { get; set; } = 1000;
@@ -92,7 +100,7 @@ namespace Rove.Model
     {
         public OverallConfigChecked(OverallConfig serialized, UserConfig userSerialized)
         {
-            RoveEnvironments = new RoveEnvironments(serialized.RoveEnvironment);
+            RoveEnvironments = new RoveEnvironments(serialized.RoveEnvironmentBase, serialized.RoveEnvironment);
             OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(serialized.OnAnyProcessStartedScript), serialized.OnAnyProcessStartedScript, RoveEnvironments);
             SetRoveEnvScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(serialized.SetRoveEnvScript), serialized.SetRoveEnvScript, RoveEnvironments);
             LogHistory = serialized.LogHistory;

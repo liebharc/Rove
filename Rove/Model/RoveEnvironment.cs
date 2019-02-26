@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Rove.Model
 {
@@ -7,12 +10,48 @@ namespace Rove.Model
     {
         private static readonly string RoveEnvMarker = "$RoveEnv";
 
-        public RoveEnvironments(IEnumerable<EnvironmentEntry> mapping)
+        public RoveEnvironments(EnvironmentEntrySearch baseDirectory, IEnumerable<EnvironmentEntry> mapping)
         {
-            foreach (var map in mapping)
+            foreach (var map in mapping.Concat(Search(baseDirectory)))
             {
                 Mapping.Add(map.Key, map.Value);
             }
+        }
+
+        public static IEnumerable<EnvironmentEntry> Search(EnvironmentEntrySearch baseDirectory)
+        {
+            if (string.IsNullOrEmpty(baseDirectory.GitRepo))
+            {
+                return new List<EnvironmentEntry>();
+            }
+
+            if (string.IsNullOrEmpty(baseDirectory.BaseFolder))
+            {
+                throw new ArgumentException("BaseFolder can't be empty if GitRepo is used");
+            }
+
+            if (!Directory.Exists(baseDirectory.BaseFolder))
+            {
+                throw new FileNotFoundException(baseDirectory.BaseFolder + " is not a valid path");
+            }
+
+            var gitFiles = Directory.GetDirectories(baseDirectory.BaseFolder)
+                .Where(d => DoesGitConfigMatch(Path.Combine(d, ".git", "config"), baseDirectory.GitRepo))
+                .OrderBy(d => d)
+                .ToList();
+
+            return gitFiles.Select(d => new EnvironmentEntry { Key = Path.GetFileName(d), Value = d });
+        }
+
+        public static bool DoesGitConfigMatch(string file, string repoName)
+        {
+            if (!File.Exists(file))
+            {
+                return false;
+            }
+
+            var regex = new Regex("url\\s*=.*" + repoName);
+            return File.ReadAllLines(file).Any(l => regex.IsMatch(l));
         }
 
         private IDictionary<string, string> Mapping { get; } = new Dictionary<string, string>();
