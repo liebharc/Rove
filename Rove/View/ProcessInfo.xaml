@@ -23,7 +23,14 @@
             <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" IsEnabled="{Binding Path=IsEnabled}"/>
             <Button Grid.Column="1" Command="{Binding OpenLogFile}" IsEnabled="{Binding Path=IsEnabled}">Open Log ...</Button>
 
-            <Button Grid.Column="3" Command="{Binding StartProcess}" Visibility="{Binding Path=IsEnabled, Converter={StaticResource ShowOnDisabled}}">Start</Button>
+            <Button Grid.Column="3" Command="{Binding StartProcess}" Content="Start">
+                <Button.Visibility>
+                    <MultiBinding Converter="{StaticResource ShowOnDisabled}">
+                        <Binding Path="IsEnabled" />
+                        <Binding Path="IsStartCommandAvailable" />
+                    </MultiBinding>
+                </Button.Visibility>
+            </Button>
             <Button Grid.Column="4" Command="{Binding Close}" IsEnabled="{Binding Path=IsEnabled}">x</Button>
         </Grid>
         <Grid DockPanel.Dock="Bottom" IsEnabled="{Binding Path=IsEnabled}">

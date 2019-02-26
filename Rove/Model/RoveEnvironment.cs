@@ -83,7 +83,7 @@ namespace Rove.Model
             }
 
             var selection = current.Selection;
-            if (!Mapping.ContainsKey(selection))
+            if (selection == null || !Mapping.ContainsKey(selection))
             {
                 return path;
             }

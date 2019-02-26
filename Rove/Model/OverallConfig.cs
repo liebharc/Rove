@@ -172,7 +172,7 @@ namespace Rove.Model
             OnProcessStartedScript = Converstions.GetOptionalPath(serialized.ProcessName, nameof(serialized.OnProcessStartedScript), serialized.OnProcessStartedScript, environments);
             FindLogFileScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.FindLogFileScript), serialized.FindLogFileScript, environments);
             IsKnownProcess = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.IsKnownProcess), serialized.IsKnownProcess);
-            StartProcessScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.StartProcessScript), serialized.StartProcessScript, environments);
+            StartProcessScript = Converstions.GetOptionalPath(serialized.ProcessName, nameof(serialized.StartProcessScript), serialized.StartProcessScript, environments);
             Color = Converstions.GetColor(serialized.ProcessName, nameof(serialized.Color), serialized.Color);
         }
 
