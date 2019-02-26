@@ -34,6 +34,24 @@ namespace Rove.Model
                 });
             }
 
+            public ScriptResult(int exitCode, string stdOut, string stdErr)
+            {
+                ExitCode = exitCode;
+                StdOutLinesLazy = new Lazy<List<string>>(() =>
+                {
+                    List<string> result = new List<string>();
+                    result.Add(stdOut);
+                    return result;
+                });
+
+                StdErrLinesLazy = new Lazy<List<string>>(() =>
+                {
+                    List<string> result = new List<string>();
+                    result.Add(stdErr);
+                    return result;
+                });
+            }
+
             public int ExitCode { get; }
             private Lazy<List<string>> StdOutLinesLazy { get; }
             private Lazy<List<string>> StdErrLinesLazy { get; }
@@ -56,23 +74,51 @@ namespace Rove.Model
             }
         }
 
-        public static ScriptResult Run(FileInfo script, IEnumerable<string> arguments = null, IDictionary<string, string> environment = null)
+        public static ScriptResult Run(ScriptPath script, CurrentRoveEnvironment roveEnvironment, IEnumerable<string> arguments = null, IDictionary<string, string> environment = null)
+        {
+            try
+            {
+                if (arguments == null)
+                {
+                    var scriptDefaultArg = script.ResolveArguments(roveEnvironment);
+                    if (!string.IsNullOrEmpty(scriptDefaultArg))
+                    {
+                        arguments = new string[] { scriptDefaultArg };
+                    }
+                }
+                return Run(
+                    script.ResolvePath(roveEnvironment), 
+                    script.ResolveWorkingDir(roveEnvironment),
+                    arguments, 
+                    environment);
+            }
+            catch (FileNotFoundException ex)
+            {
+                return new ScriptResult(999, string.Empty, ex.Message);
+            }
+        }
+
+        public static ScriptResult Run(FileInfo script, DirectoryInfo workingDir, IEnumerable<string> arguments = null, IDictionary<string, string> environment = null)
         {
             if (script.Extension == ".ps1")
             {
-                return RunPowerShell(script, arguments, environment);
+                return RunPowerShell(script, workingDir, arguments, environment);
             }
 
-            return RunCmdOrExe(script, arguments, environment);
+            return RunCmdOrExe(script, workingDir, arguments, environment);
         }
 
-        private static ScriptResult RunCmdOrExe(FileInfo script, IEnumerable<string> arguments, IDictionary<string, string> environment)
+        private static ScriptResult RunCmdOrExe(FileInfo script, DirectoryInfo workingDir, IEnumerable<string> arguments, IDictionary<string, string> environment)
         {
             var ps = new ProcessStartInfo();
             ps.FileName = script.FullName;
             if (arguments != null)
             {
                 ps.Arguments = string.Join(" ", arguments);
+            }
+            if (workingDir != null)
+            {
+                ps.WorkingDirectory = workingDir.FullName;
             }
 
             SetEnvironment(environment, ps);
@@ -102,13 +148,17 @@ namespace Rove.Model
             }
         }
 
-        private static ScriptResult RunPowerShell(FileInfo script, IEnumerable<string> arguments, IDictionary<string, string> environment)
+        private static ScriptResult RunPowerShell(FileInfo script, DirectoryInfo workingDir, IEnumerable<string> arguments, IDictionary<string, string> environment)
         {
             var ps = new ProcessStartInfo();
             ps.FileName = "powershell";
             if (arguments != null)
             {
                 ps.Arguments = script + " " + string.Join(" ", arguments);
+            }
+            if (workingDir != null)
+            {
+                ps.WorkingDirectory = workingDir.FullName;
             }
 
             SetEnvironment(environment, ps);

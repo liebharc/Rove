@@ -58,7 +58,7 @@ namespace Rove.Model
 
         private Process GuiProcess { get; set; }
 
-        private IntPtr MainWindowHandle { get; }
+        private IntPtr MainWindowHandle { get; set; }
 
         private bool IsDisposedInternal { get; set; } = false;
 
@@ -120,7 +120,7 @@ namespace Rove.Model
                 if (children.Any(s => s.ProcessName == CONHOST))
                 {
                     Logger.WriteInfo("This process has conhost process as child, using process directly as GUI process");
-                    GuiProcess = parent;
+                    GuiProcess = process;
                 }
                 else if (siblings.Any(s => s.ProcessName == CONHOST))
                 {
@@ -158,9 +158,23 @@ namespace Rove.Model
         {
             IntPtr mainWindowHandle = process.MainWindowHandle;
             DateTime start = DateTime.Now;
-            while (MainWindowHandle == IntPtr.Zero && DateTime.Now - start < TimeSpan.FromMilliseconds(200))
+            while (mainWindowHandle == IntPtr.Zero && DateTime.Now - start < TimeSpan.FromMilliseconds(200))
             {
                 mainWindowHandle = process.MainWindowHandle;
+            }
+
+            if (mainWindowHandle == IntPtr.Zero)
+            {
+                var windows = GetRootWindowsOfProcess(GuiProcess.Id);
+                if (windows.Count == 1)
+                {
+                    mainWindowHandle = windows.First();
+                    Logger.WriteInfo("Regular window detection failed, but fallback succeeded for process: " + process.Id);
+                }
+                else
+                {
+                    Logger.WriteInfo("Failed to find window for process: " + process.Id);
+                }
             }
 
             return mainWindowHandle;
@@ -182,7 +196,13 @@ namespace Rove.Model
 
         public void Hide()
         {
-            User32.ShowWindow(MainWindowHandle, User32.SW_HIDE);
+            if (MainWindowHandle != IntPtr.Zero)
+            {
+                User32.ShowWindow(MainWindowHandle, User32.SW_HIDE);
+            } else
+            {
+                Logger.WriteInfo("Process " + GuiProcess.Id + " has no main window to hide");
+            }
         }
 
         public void Dispose()
@@ -206,12 +226,66 @@ namespace Rove.Model
                 return false;
             }
 
-            return GuiProcess.Id == other.GuiProcess.Id;
+            return WorkerProcess.Id == other.WorkerProcess.Id;
         }
 
         public override int GetHashCode()
         {
-            return GuiProcess.Id;
+            return WorkerProcess.Id;
+        }
+
+        internal void Update()
+        {
+            if (!IsDisposed && GuiProcess.HasExited)
+            {
+                Logger.WriteInfo("GUI process " + GuiProcess.Id + " has exited, but worker is still available. Hiding worker " + WorkerProcess.Id);
+                GuiProcess = WorkerProcess;
+                MainWindowHandle = WaitForMainWindowHandleToBecomeAvailable(GuiProcess);
+                Hide();
+            }
+        }
+
+        private static List<IntPtr> GetRootWindowsOfProcess(int pid)
+        {
+            List<IntPtr> rootWindows = GetChildWindows(IntPtr.Zero);
+            List<IntPtr> dsProcRootWindows = new List<IntPtr>();
+            foreach (IntPtr hWnd in rootWindows)
+            {
+                uint lpdwProcessId;
+                User32.GetWindowThreadProcessId(hWnd, out lpdwProcessId);
+                if (lpdwProcessId == pid)
+                    dsProcRootWindows.Add(hWnd);
+            }
+            return dsProcRootWindows;
+        }
+
+        private static List<IntPtr> GetChildWindows(IntPtr parent)
+        {
+            List<IntPtr> result = new List<IntPtr>();
+            GCHandle listHandle = GCHandle.Alloc(result);
+            try
+            {
+                User32.Win32Callback childProc = new User32.Win32Callback(EnumWindow);
+                User32.EnumChildWindows(parent, childProc, GCHandle.ToIntPtr(listHandle));
+            }
+            finally
+            {
+                if (listHandle.IsAllocated)
+                    listHandle.Free();
+            }
+            return result;
+        }
+
+        private static bool EnumWindow(IntPtr handle, IntPtr pointer)
+        {
+            GCHandle gch = GCHandle.FromIntPtr(pointer);
+            List<IntPtr> list = gch.Target as List<IntPtr>;
+            if (list == null)
+            {
+                throw new InvalidCastException("GCHandle Target could not be cast as List<IntPtr>");
+            }
+            list.Add(handle);
+            return true;
         }
     }
 
@@ -223,5 +297,14 @@ namespace Rove.Model
         internal const int SW_HIDE = 0;
 
         internal const int SW_SHOW = 5;
+
+        [DllImport("user32.dll")]
+        public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        [DllImport("user32.Dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool EnumChildWindows(IntPtr parentHandle, Win32Callback callback, IntPtr lParam);
+
+        public delegate bool Win32Callback(IntPtr hwnd, IntPtr lParam);
     }
 }

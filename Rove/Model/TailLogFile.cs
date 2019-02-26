@@ -8,15 +8,19 @@ namespace Rove.Model
 {
     public sealed class TailLogFile : IDisposable
     {
+        private LogIdleCheck IdleCheck { get; } = new LogIdleCheck();
+
         private Thread Reader { get; set; }
 
         public FileInfo File { get; }
+
+        private bool IsNewTailSessionInit { get; }
 
         public volatile bool _isActive = true;
 
         public event Action<bool, int, List<string>> NewMessagesArrived;
 
-        public TailLogFile(FileInfo file)
+        public TailLogFile(FileInfo file, bool isNewTailSession)
         {
             if (file == null || !file.Exists)
             {
@@ -24,6 +28,17 @@ namespace Rove.Model
             }
 
             File = file;
+            IsNewTailSessionInit = isNewTailSession;
+        }
+
+        public bool IsIdle(TimeSpan duration)
+        {
+            return IdleCheck.IsIdle(duration);
+        }
+
+        public void RememberIdleCheck()
+        {
+            IdleCheck.Reset();
         }
 
         public void Start()
@@ -33,7 +48,7 @@ namespace Rove.Model
                 return;
             }
 
-            Reader = new Thread(Read);
+            Reader = new Thread(Read) { IsBackground = true };
             Reader.Start();
         }
 
@@ -42,7 +57,7 @@ namespace Rove.Model
             using (StreamReader reader = new StreamReader(new FileStream(File.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
                 long lastMaxOffset = reader.BaseStream.Length;
-                bool isNewTailSession = true;
+                bool isNewTailSession = IsNewTailSessionInit;
                 while (_isActive)
                 {
                     if (reader.BaseStream.Length != lastMaxOffset)
@@ -60,6 +75,7 @@ namespace Rove.Model
                         lastMaxOffset = reader.BaseStream.Position;
                         NewMessagesArrived?.Invoke(isNewTailSession, charCount, lines);
                         isNewTailSession = false;
+                        IdleCheck.Reset();
                     }
 
                     Thread.Sleep(TimeSpan.FromMilliseconds(100));

@@ -28,39 +28,56 @@ namespace Rove.View
         }
     }
 
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
         private static void CreateDefaultConfigFile()
         {
-            WriteConfigFile(OverallConfig.DefaultConfig, GetLogBaseName() + "Default.xml");
+            WriteConfigFile(OverallConfig.DefaultConfig, GetAuxFileBaseName() + "Default.xml");
         }
 
-        private static void WriteConfigFile(OverallConfig config, string file)
+        private static void WriteConfigFile<T>(T config, string file)
         {
             var defaultConfig = ConfigSerializer.ConfigToText(config);
             File.WriteAllText(file, defaultConfig);
         }
 
-        private static string GetLogBaseName()
+        private static string GetAuxFileBaseName()
         {
             return typeof(MainWindow).Assembly.Location.Replace(".exe", "");
         }
 
-        private static string GetLogName()
+        private static string GetOverallConfigFileName()
         {
-            return GetLogBaseName() + ".xml";
+            return GetAuxFileBaseName() + ".xml";
+        }
+
+        private static string GetUserConfigFileName()
+        {
+            return GetAuxFileBaseName() + "User.xml";
         }
 
         private static OverallConfig LoadConfig()
         {
-            var file = GetLogName();
+            var file = GetOverallConfigFileName();
             if (!File.Exists(file))
             {
                 return OverallConfig.DefaultConfig;
             }
 
             var content = File.ReadAllText(file);
-            return ConfigSerializer.TextToConfig(content);
+            return ConfigSerializer.TextToConfig<OverallConfig>(content);
+        }
+
+        private static UserConfig LoadDisplayConfig()
+        {
+            var file = GetUserConfigFileName();
+            if (!File.Exists(file))
+            {
+                return UserConfig.DefaultConfig;
+            }
+
+            var content = File.ReadAllText(file);
+            return ConfigSerializer.TextToConfig<UserConfig>(content);
         }
 
         private object UpdateThreadLock { get; } = new object();
@@ -71,30 +88,36 @@ namespace Rove.View
 
         private bool IsDisposed { get; set; } = false;
 
-        private OverallConfig LastConfig { get; }
+        private CurrentRoveEnvironment CurrentRoveEnvironment { get; }
 
         public MainWindow()
         {
             InitializeComponent();
             OverallConfigChecked config = null;
+            UserConfig user = UserConfig.DefaultConfig;
             try
             {
                 CreateDefaultConfigFile();
-                LastConfig = LoadConfig();
-                config = LastConfig.ToOverallConfig();
+                var overall = LoadConfig();
+                user = LoadDisplayConfig();
+                config = overall.ToOverallConfig(user);
             }
             catch (Exception ex)
             {
                 Result.Error(ex.Message).Report();
                 Environment.Exit(0);
             }
-            TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection(config);
-            CreateAPanelForEachProcess(viewModel.Processes);
+
+            var topModel = new TopViewModel(config.RoveEnvironments, user.CurrentRoveEnvironment);
+            TopBar.DataContext = topModel;
+            TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection(config, topModel.CurrentRoveEnvironment);
+            CurrentRoveEnvironment = topModel.CurrentRoveEnvironment;
+            CreateAPanelForEachProcess(viewModel.Processes, user);
 
             DataContext = viewModel;
             Closed += MainWindow_Closed;
 
-            UpdateThread = new Thread((_) => Update(viewModel));
+            UpdateThread = new Thread((_) => Update(viewModel)) { IsBackground = true };
             UpdateThread.Start();
         }
 
@@ -121,14 +144,18 @@ namespace Rove.View
                 }
 
                 UpdateThread.Join();
-                StoreCurrentLayout();
-                StoreCurrentAutoScrollValues();
-                WriteConfigFile(LastConfig, GetLogName());
+                var config = new UserConfig
+                {
+                    DisplayLayout = StoreCurrentLayout(),
+                    ProcessConfigs = StoreCurrentAutoScrollValues(),
+                    CurrentRoveEnvironment = CurrentRoveEnvironment.Selection
+                };
+                WriteConfigFile(config, GetUserConfigFileName());
                 IsDisposed = true;
             }
         }
 
-        private void CreateAPanelForEachProcess(IList<TomcatProcessViewModel> processes)
+        private void CreateAPanelForEachProcess(IList<TomcatProcessViewModel> processes, UserConfig user)
         {
             var initialPane = LayoutDocumentPaneFindLayoutDocumentPanes(Layout.Layout.Children).First();
             List<LayoutDocument> documents = new List<LayoutDocument>();
@@ -148,7 +175,7 @@ namespace Rove.View
                 documents.Add(document);
             }
 
-            RestoreLayout();
+            RestoreLayout(user);
             HandleChildrenWhichAreNotPartOfTheRestoredLayout(documents);
         }
 
@@ -196,7 +223,7 @@ namespace Rove.View
             }
         }
 
-        private void StoreCurrentLayout()
+        private string StoreCurrentLayout()
         {
             try
             {
@@ -204,36 +231,36 @@ namespace Rove.View
                 {
                     XmlLayoutSerializer xmlLayout = new XmlLayoutSerializer(Layout);
                     xmlLayout.Serialize(writer);
-                    LastConfig.DisplayLayout = writer.ToString();
+                    return writer.ToString();
                 }
             }
             catch (Exception ex)
             {
                 Result.Error("Failed to save display configuration: " + ex.Message).Report();
+                return string.Empty;
             }
         }
 
-        private void StoreCurrentAutoScrollValues()
+        private List<ProcessUserConfig> StoreCurrentAutoScrollValues()
         {
             var model = DataContext as TomcatProcessViewModelCollection;
-            if (model == null || model.Processes.Count != LastConfig.ProcessConfigs.Count)
+            if (model == null)
             {
-                return;
+                return new List<ProcessUserConfig>();
             }
 
-            for (int i = 0; i < model.Processes.Count; i++)
-            {
-                LastConfig.ProcessConfigs[i].AutoScroll = model.Processes[i].AutoScroll;
-            }
+            return model.Processes
+                .Select(p => new ProcessUserConfig { ProcessName = p.Title, AutoScroll = p.AutoScroll })
+                .ToList();
         }
 
-        private void RestoreLayout()
+        private void RestoreLayout(UserConfig userConfig)
         {
-            if (!string.IsNullOrEmpty(LastConfig.DisplayLayout))
+            if (!string.IsNullOrEmpty(userConfig.DisplayLayout))
             {
                 try
                 {
-                    using (StringReader reader = new StringReader(LastConfig.DisplayLayout))
+                    using (StringReader reader = new StringReader(userConfig.DisplayLayout))
                     {
                         XmlLayoutSerializer xmlLayout = new XmlLayoutSerializer(Layout);
                         xmlLayout.Deserialize(reader);

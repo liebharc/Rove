@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using Rove.View;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Text;
 using System.Windows;
@@ -45,7 +44,7 @@ namespace Rove.ViewModel
         private OverallConfigChecked Config { get; }
 
         private ProcessConfigChecked ProcessConfig { get; }
-
+        public CurrentRoveEnvironment CurrentEnvironment { get; }
         public ICommand Close { get; }
 
         public ICommand ShowHide { get; }
@@ -174,7 +173,9 @@ namespace Rove.ViewModel
             }
         }
 
-        public TomcatProcessViewModel(OverallConfigChecked config, ProcessConfigChecked processConfig)
+        public TimeSpan LogFileIdleRecheckDuration { get; } = TimeSpan.FromSeconds(60);
+
+        public TomcatProcessViewModel(OverallConfigChecked config, ProcessConfigChecked processConfig, CurrentRoveEnvironment currentEnvironment)
         {
             if (config == null)
             {
@@ -187,9 +188,24 @@ namespace Rove.ViewModel
             }
 
             AutoScroll = processConfig.AutoScroll;
-            StartProcess = new LambdaCommand(() => ProcessUtils.Run(processConfig.StartProcessScript).Report());
+            CurrentEnvironment = currentEnvironment;
+            StartProcess = new LambdaCommand(() => 
+                {
+                    if (processConfig != null)
+                    {
+                        ProcessUtils.Run(processConfig.StartProcessScript, CurrentEnvironment).Report();
+                    }
+                }
+            );
             Close = new LambdaCommand(() => Tomcat?.Kill());
-            OpenLogFile = new LambdaCommand(() => ProcessUtils.Run("explorer.exe", QuoteDouble(LogFile.File.FullName)).Report());
+            OpenLogFile = new LambdaCommand(() => 
+                {
+                    if (LogFile != null && LogFile.File != null)
+                    {
+                        ProcessUtils.Run("explorer.exe", ProcessUtils.DefaultWorkingDir, QuoteDouble(LogFile.File.FullName)).Report();
+                    }
+                }
+            );
             ShowHide = new LambdaCommand(() =>
             {
                 if (IsVisible)
@@ -248,6 +264,7 @@ namespace Rove.ViewModel
                 try
                 {
                     TryToAttachToTomcatIfIdle(tomcats);
+                    Tomcat?.Update();
                 }
                 catch (LogFileException ex)
                 {
@@ -269,7 +286,7 @@ namespace Rove.ViewModel
                 if (Tomcat != null)
                 {
                     OnNewTomcat();
-                    StartToReadLogFile();
+                    StartToReadLogFile(DetermineLogFilePath(), true);
                     IsVisible = false;
                     OnTomcatChanged();
                 }
@@ -280,11 +297,26 @@ namespace Rove.ViewModel
 				LogFile?.Dispose();
 				LogFile = null;
                 IsVisible = false;
+                if (LogFile != null)
+                {
+                    DisposeLogFile();
+                }
+
                 OnTomcatChanged();
             }
             else if (LogFile == null)
             {
-                StartToReadLogFile();
+                StartToReadLogFile(DetermineLogFilePath(), true);
+            }
+            else if (LogFile != null && LogFile.IsIdle(LogFileIdleRecheckDuration))
+            {
+                LogFile.RememberIdleCheck();
+                var logFile = DetermineLogFilePath();
+                if (File.Exists(logFile) && !new FileInfo(logFile).FullName.Equals(LogFile.File.FullName))
+                {
+                    DisposeLogFile();
+                    StartToReadLogFile(logFile, false);
+                }
             }
         }
 
@@ -321,45 +353,57 @@ namespace Rove.ViewModel
         {
             if (LogFile != null)
             {
-                LogFile.Dispose();
-                LogFile.NewMessagesArrived -= LogFile_NewMessagesArrived;
-                LogFile = null;
+                DisposeLogFile();
+            }
+
+            if (Config.SetRoveEnvScript != null)
+            {
+                var result = Script.Run(Config.SetRoveEnvScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) });
+                SetRoveEnv(result);
             }
 
             if (Config.OnNewProcessScript != null)
             {
-                Script.Run(Config.OnNewProcessScript, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
+                Script.Run(Config.OnNewProcessScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
             }
 
             if (ProcessConfig.OnProcessStartedScript != null)
             {
-                Script.Run(ProcessConfig.OnProcessStartedScript, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
+                Script.Run(ProcessConfig.OnProcessStartedScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) }).Check().Report();
             }
         }
 
-        private void StartToReadLogFile()
+        private void SetRoveEnv(Script.ScriptResult result)
         {
-            var logResult = Script.Run(ProcessConfig.FindLogFileScript, new[] { QuoteSingle(Tomcat.CommandLine) });
-            if (logResult.Check().IsError)
+            result.Check().Report();
+            if (result.StdOut.Count == 1)
             {
-                logResult.Check().Report();
+                var newEnv = result.StdOut.First();
+                Logger.WriteInfo("SetRoveEnvScript set env to " + newEnv);
+                CurrentEnvironment.Selection = newEnv;
             }
-            else if (logResult.StdOut.Count == 0)
+            else if (result.StdOut.Any())
             {
-                Application.Current.Dispatcher.Invoke(() => DisplayMessageInLogWindow(ProcessConfig.FindLogFileScript+ " didn't return a result yet"));
+                Logger.WriteInfo("SetRoveEnvScript was chattier than expected: " + string.Join("\n", result.StdOut));
             }
-            else if (logResult.StdOut.Count > 1)
+        }
+
+        private void DisposeLogFile()
+        {
+            LogFile.Dispose();
+            LogFile.NewMessagesArrived -= LogFile_NewMessagesArrived;
+            LogFile = null;
+        }
+
+        private void StartToReadLogFile(string file, bool isNewSession)
+        {
+            if (!string.IsNullOrEmpty(file))
             {
-                throw new LogFileException(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut));
-            }
-            else
-            {
-                var file = logResult.StdOut.First();
                 try
                 {
                     if (File.Exists(file))
                     {
-                        LogFile = new TailLogFile(new FileInfo(file));
+                        LogFile = new TailLogFile(new FileInfo(file), isNewSession);
                         LogFile.NewMessagesArrived += LogFile_NewMessagesArrived;
                         LogFile.Start();
                     }
@@ -373,6 +417,28 @@ namespace Rove.ViewModel
                     throw new LogFileException(ProcessConfig.FindLogFileScript + " returned an invalid result: " + file + " error was " + ex.Message);
                 }
             }
+        }
+
+        private string DetermineLogFilePath()
+        {
+            var logResult = Script.Run(ProcessConfig.FindLogFileScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) });
+            if (logResult.Check().IsError)
+            {
+                logResult.Check().Report();
+                return string.Empty;
+            }
+            else if (logResult.StdOut.Count == 0)
+            {
+                Application.Current.Dispatcher.Invoke(() => DisplayMessageInLogWindow(ProcessConfig.FindLogFileScript + " didn't return a result yet"));
+                return string.Empty;
+            }
+            else if (logResult.StdOut.Count > 1)
+            {
+                throw new LogFileException(ProcessConfig.FindLogFileScript + " returned too many results:\n" + string.Join("\n", logResult.StdOut));
+            }
+
+            var file = logResult.StdOut.First();
+            return file;
         }
 
         private void LogFile_NewMessagesArrived(bool isNewTailSession, int charCount, List<string> lines)

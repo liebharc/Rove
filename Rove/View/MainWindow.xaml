@@ -1,12 +1,31 @@
-﻿<Window x:Class="Rove.View.MainWindow"
+﻿<controls:MetroWindow
+        x:Class="Rove.View.MainWindow"
+        xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls" 
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         xmlns:local="clr-namespace:Rove.View"
+        Icon="../Bug.ico"
         mc:Ignorable="d"
         Title="Rove" Height="350" Width="525">
+    <controls:MetroWindow.RightWindowCommands>
+        <controls:WindowCommands HorizontalAlignment="Stretch">
+            <Grid HorizontalAlignment="Stretch" Name="TopBar">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Column="0" 
+                          Visibility="{Binding EnvironmentVisibility}" 
+                          ItemsSource="{Binding Environments}" 
+                          SelectedItem="{Binding CurrentEnvironment}"/>
+                <Button Content="?" Grid.Column="2" Command="{Binding Help}" />
+            </Grid>
+        </controls:WindowCommands>
+    </controls:MetroWindow.RightWindowCommands>
     <xcad:DockingManager AllowMixedOrientation="True" x:Name="Layout">
         <xcad:DockingManager.DocumentHeaderTemplate>
             <DataTemplate>
@@ -27,4 +46,4 @@
             </xcad:LayoutPanel>
         </xcad:LayoutRoot>
     </xcad:DockingManager>
-</Window>
+</controls:MetroWindow>

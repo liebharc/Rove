@@ -42,11 +42,17 @@
     <Reference Include="FastColoredTextBox">
       <HintPath>..\..\fctb.2.16.21\lib\FastColoredTextBox.dll</HintPath>
     </Reference>
+    <Reference Include="MahApps.Metro, Version=1.5.0.23, Culture=neutral, PublicKeyToken=f4fb5a3c4d1e5b4f, processorArchitecture=MSIL">
+      <HintPath>..\packages\MahApps.Metro.1.5.0\lib\net45\MahApps.Metro.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\MahApps.Metro.1.5.0\lib\net45\System.Windows.Interactivity.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -84,52 +90,34 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Model\Config.cs" />
+    <Compile Include="Model\ConfigException.cs" />
+    <Compile Include="Model\CurrentRoveEnvironment.cs" />
     <Compile Include="Model\LogColors.cs" />
     <Compile Include="Model\Logger.cs" />
+    <Compile Include="Model\LogIdleCheck.cs" />
+    <Compile Include="Model\OverallConfig.cs" />
     <Compile Include="Model\ProcessExtensions.cs" />
     <Compile Include="Model\ProcessUtils.cs" />
     <Compile Include="Model\Result.cs" />
+    <Compile Include="Model\RoveEnvironment.cs" />
     <Compile Include="Model\Script.cs" />
+    <Compile Include="Model\ScriptPath.cs" />
     <Compile Include="Model\TailLogFile.cs" />
+    <Compile Include="Model\UserConfig.cs" />
     <Compile Include="ViewModel\LambdaCommand.cs" />
     <Compile Include="ViewModel\ResultReporter.cs" />
     <Compile Include="ViewModel\TomcatProcessViewModel.cs" />
     <Compile Include="ViewModel\TomcatProcessViewModelCollection.cs" />
+    <Compile Include="ViewModel\TopViewModel.cs" />
+    <Compile Include="View\DisplayInternalLog.xaml.cs">
+      <DependentUpon>DisplayInternalLog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\ProcessInfo.xaml.cs">
       <DependentUpon>ProcessInfo.xaml</DependentUpon>
     </Compile>
-    <Page Include="Themes\MetroDark\MetroDark.MSControls.Core.Implicit.xaml">
-      <Generator>MSBuild:Compile</Generator>
+    <Page Include="View\DisplayInternalLog.xaml">
       <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Themes\MetroDark\Styles.Shared.xaml">
       <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Themes\MetroDark\Styles.WPF.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Themes\MetroDark\Theme.Colors.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Themes\MetroLight\Metro.MSControls.Core.Implicit.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Themes\MetroLight\Styles.Shared.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Themes\MetroLight\Styles.WPF.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Themes\MetroLight\Theme.Colors.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
     <Page Include="View\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -167,6 +155,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
