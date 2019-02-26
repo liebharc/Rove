@@ -165,7 +165,7 @@ namespace Rove.Model
             SetProcessDefaultValues(ps);
 
             var process = Process.Start(ps);
-            process.WaitForExit();
+            process.WaitForExit((int)TimeSpan.FromSeconds(5).TotalMilliseconds);
 
             return new ScriptResult(process.ExitCode, process.StandardOutput, process.StandardError);
         }

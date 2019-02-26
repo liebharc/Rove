@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
 using System.Xml.Serialization;
@@ -28,6 +29,12 @@ namespace Rove.Model
         {
             Path = Path.Trim(new[] { '"' });
             WorkingDir = WorkingDir.Trim(new[] { '"' });
+        }
+
+        internal void ReplaceVariables()
+        {
+            Path = Path.Replace("$cwd", AppDomain.CurrentDomain.BaseDirectory);
+            WorkingDir = WorkingDir.Replace("$cwd", AppDomain.CurrentDomain.BaseDirectory);
         }
     }
 
@@ -227,6 +234,7 @@ namespace Rove.Model
         public static ScriptPath GetMandatoryPath(string section, string argName, Executable executable, RoveEnvironments environments)
         {
             executable.Trim();
+            executable.ReplaceVariables();
             if (string.IsNullOrEmpty(executable.Path))
             {
                 throw new ConfigException(section, argName);

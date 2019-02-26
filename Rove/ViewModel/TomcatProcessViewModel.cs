@@ -409,7 +409,7 @@ namespace Rove.ViewModel
                     }
                     else
                     {
-                        Application.Current.Dispatcher.Invoke(() => DisplayMessageInLogWindow("Waiting for " + file + " to become available"));
+                        Application.Current.Dispatcher.BeginInvoke(new Action(() => DisplayMessageInLogWindow("Waiting for " + file + " to become available")));
                     }
                 }
                 catch (Exception ex)

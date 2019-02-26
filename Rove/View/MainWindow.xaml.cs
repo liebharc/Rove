@@ -137,11 +137,8 @@ namespace Rove.View
         {
             if (!IsDisposed)
             {
-                lock (UpdateThreadLock)
-                {
-                    (DataContext as IDisposable)?.Dispose();
-                    _isTimerActive = false;
-                }
+                (DataContext as IDisposable)?.Dispose();
+                _isTimerActive = false;
 
                 UpdateThread.Join();
                 var config = new UserConfig
