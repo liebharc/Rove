@@ -99,9 +99,8 @@ namespace Rove.Model
     {
         public OverallConfigChecked(OverallConfig serialized, UserConfig userSerialized)
         {
-            RoveEnvironments = new RoveEnvironments(serialized.RoveEnvironmentBase, serialized.RoveEnvironment);
-            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(serialized.OnAnyProcessStartedScript), serialized.OnAnyProcessStartedScript, RoveEnvironments);
-            SetRoveEnvScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(serialized.SetRoveEnvScript), serialized.SetRoveEnvScript, RoveEnvironments);
+            OnNewProcessScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(serialized.OnAnyProcessStartedScript), serialized.OnAnyProcessStartedScript);
+            SetRoveEnvScript = Converstions.GetOptionalPath(nameof(OverallConfig), nameof(serialized.SetRoveEnvScript), serialized.SetRoveEnvScript);
             LogHistory = serialized.LogHistory;
             if (LogHistory < 0)
             {
@@ -116,14 +115,13 @@ namespace Rove.Model
             foreach (var s in serialized.ProcessConfigs)
             {
                 var userConfig = userSerialized.ProcessConfigs.FirstOrDefault(p => p.ProcessName == s.ProcessName);
-                ProcessConfigs.Add(s.ToProcessConfig(userConfig, RoveEnvironments));
+                ProcessConfigs.Add(s.ToProcessConfig(userConfig));
             }
         }
 
         public string DisplayLayout { get; }
         public ScriptPath OnNewProcessScript { get; }
         public ScriptPath SetRoveEnvScript { get; }
-        public RoveEnvironments RoveEnvironments { get; }
         public int LogHistory { get; }
         public int UpdateLimit { get; }
         public List<ProcessConfigChecked> ProcessConfigs { get; } = new List<ProcessConfigChecked>();
@@ -147,15 +145,15 @@ namespace Rove.Model
 
         public string Color { get; set; } = string.Empty;
 
-        public ProcessConfigChecked ToProcessConfig(ProcessUserConfig userSerialized, RoveEnvironments environments)
+        public ProcessConfigChecked ToProcessConfig(ProcessUserConfig userSerialized)
         {
-            return new ProcessConfigChecked(this, userSerialized, environments);
+            return new ProcessConfigChecked(this, userSerialized);
         }
     }
 
     public class ProcessConfigChecked
     {
-        public ProcessConfigChecked(ProcessConfig serialized, ProcessUserConfig userSerialized, RoveEnvironments environments)
+        public ProcessConfigChecked(ProcessConfig serialized, ProcessUserConfig userSerialized)
         {
             if (string.IsNullOrEmpty(serialized.ProcessName))
             {
@@ -166,8 +164,8 @@ namespace Rove.Model
             WarningMessage = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.WarningMessage), serialized.WarningMessage);
             ErrorMessage = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.ErrorMessage), serialized.ErrorMessage);
             StartupMessage = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.StartupMessage), serialized.StartupMessage);
-            OnProcessStartedScript = Converstions.GetOptionalPath(serialized.ProcessName, nameof(serialized.OnProcessStartedScript), serialized.OnProcessStartedScript, environments);
-            FindLogFileScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.FindLogFileScript), serialized.FindLogFileScript, environments);
+            OnProcessStartedScript = Converstions.GetOptionalPath(serialized.ProcessName, nameof(serialized.OnProcessStartedScript), serialized.OnProcessStartedScript);
+            FindLogFileScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.FindLogFileScript), serialized.FindLogFileScript);
             IsKnownProcess = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.IsKnownProcess), serialized.IsKnownProcess);
             Color = Converstions.GetColor(serialized.ProcessName, nameof(serialized.Color), serialized.Color);
         }
@@ -214,7 +212,7 @@ namespace Rove.Model
             }
         }
 
-        public static ScriptPath GetOptionalPath(string section, string argName, Executable executable, RoveEnvironments environments)
+        public static ScriptPath GetOptionalPath(string section, string argName, Executable executable)
         {
             if (executable == null)
             {
@@ -227,10 +225,10 @@ namespace Rove.Model
                 return null;
             }
 
-            return GetMandatoryPath(section, argName, executable, environments);
+            return GetMandatoryPath(section, argName, executable);
         }
 
-        public static ScriptPath GetMandatoryPath(string section, string argName, Executable executable, RoveEnvironments environments)
+        public static ScriptPath GetMandatoryPath(string section, string argName, Executable executable)
         {
             executable.Trim();
             executable.ReplaceVariables();
@@ -239,7 +237,7 @@ namespace Rove.Model
                 throw new ConfigException(section, argName);
             }
 
-            var scriptPath = new ScriptPath(executable, environments);
+            var scriptPath = new ScriptPath(executable);
             if (!scriptPath.Exists)
             {
                 throw new ConfigException(section, argName);

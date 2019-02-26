@@ -102,7 +102,6 @@
     <Compile Include="Model\ProcessExtensions.cs" />
     <Compile Include="Model\ProcessUtils.cs" />
     <Compile Include="Model\Result.cs" />
-    <Compile Include="Model\RoveEnvironment.cs" />
     <Compile Include="Model\Script.cs" />
     <Compile Include="Model\ScriptPath.cs" />
     <Compile Include="Model\TailLogFile.cs" />

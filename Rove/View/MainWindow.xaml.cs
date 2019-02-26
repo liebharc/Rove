@@ -108,7 +108,7 @@ namespace Rove.View
                 Environment.Exit(0);
             }
 
-            var topModel = new TopViewModel(config.RoveEnvironments, user.CurrentRoveEnvironment);
+            var topModel = new TopViewModel(user.CurrentRoveEnvironment);
             TopBar.DataContext = topModel;
             TomcatProcessViewModelCollection viewModel = new TomcatProcessViewModelCollection(config, topModel.CurrentRoveEnvironment);
             CurrentRoveEnvironment = topModel.CurrentRoveEnvironment;

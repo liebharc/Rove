@@ -15,10 +15,6 @@ namespace Rove.ViewModel
 
         public CurrentRoveEnvironment CurrentRoveEnvironment { get; }
 
-        public IEnumerable<string> Environments => CurrentRoveEnvironment.AvailbleEnvironments;
-
-        public Visibility EnvironmentVisibility => Environments.Any() ? Visibility.Visible : Visibility.Collapsed;
-
         public string CurrentEnvironment
         {
             get
@@ -32,9 +28,9 @@ namespace Rove.ViewModel
             }
         }
 
-        public TopViewModel(RoveEnvironments environments, string currentEnvironment)
+        public TopViewModel(string currentEnvironment)
         {
-            CurrentRoveEnvironment = new CurrentRoveEnvironment(environments, currentEnvironment);
+            CurrentRoveEnvironment = new CurrentRoveEnvironment(currentEnvironment);
             CurrentRoveEnvironment.PropertyChanged += CurrentRoveEnvironment_PropertyChanged;
             Help = new LambdaCommand(() => 
             {

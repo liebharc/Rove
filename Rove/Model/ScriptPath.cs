@@ -5,30 +5,28 @@ namespace Rove.Model
 {
     public sealed class ScriptPath
     {
-        public ScriptPath(Executable executable, RoveEnvironments environments)
+        public ScriptPath(Executable executable)
         {
             Path = executable.Path;
             Arguments = executable.Arguments;
             WorkingDir = executable.WorkingDir;
-            Environments = environments;
         }
 
         public bool Exists
         {
             get
             {
-                return Environments.MapAllPath(Path).Any(p => File.Exists(p));
+                return true;
             }
         }
 
         private string Path { get; }
         private string Arguments { get; }
         private string WorkingDir { get; }
-        private RoveEnvironments Environments { get; }
 
         public FileInfo ResolvePath(CurrentRoveEnvironment currentEnvironment)
         {
-            var path = Environments.MapSelected(Path, currentEnvironment);
+            var path = currentEnvironment.MapSelected(Path);
             if (!File.Exists(path))
             {
                 throw new FileNotFoundException(Path + " was resolved to " + path + " but it doesn't exist");
@@ -38,7 +36,7 @@ namespace Rove.Model
 
         public DirectoryInfo ResolveWorkingDir(CurrentRoveEnvironment currentEnvironment)
         {
-            var workingDir = Environments.MapSelected(WorkingDir, currentEnvironment);
+            var workingDir = currentEnvironment.MapSelected(WorkingDir);
             if (!Directory.Exists(workingDir))
             {
                 return null;
@@ -48,7 +46,7 @@ namespace Rove.Model
 
         public string ResolveArguments(CurrentRoveEnvironment currentEnvironment)
         {
-            return Environments.MapSelected(Arguments, currentEnvironment);
+            return currentEnvironment.MapSelected(Arguments);
         }
     }
 }
