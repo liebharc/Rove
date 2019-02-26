@@ -1,1 +1,3 @@
-Rove beetle
+A rather specific tool which pretends to a window manager for Tomcat console windows. The use case is that in our development environment we typically have a lot of Tomcats running. Every one of them opens its console window which quickly becomes overwhelming. With this tool all the Tomcat windows will appears inside of one application.
+
+It works by hiding the Tomcat windows and showing a log file instead (e.g. catalina.out). Intended target platform is Windows. Configuration is XML and script based.
