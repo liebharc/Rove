@@ -295,7 +295,7 @@ namespace Rove.ViewModel
             {
                 LogFile.RememberIdleCheck();
                 var logFile = DetermineLogFilePath();
-                if (File.Exists(logFile) && !new FileInfo(logFile).FullName.Equals(LogFile.File.FullName))
+                if (File.Exists(logFile) && (LogFile== null || !new FileInfo(logFile).FullName.Equals(LogFile.File.FullName)))
                 {
                     DisposeLogFile();
                     StartToReadLogFile(logFile, false);
