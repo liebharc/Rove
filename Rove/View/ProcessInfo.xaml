@@ -33,7 +33,6 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <CheckBox Grid.Column="0" Content="Follow Tail" IsChecked="{Binding AutoScroll}" />
             <CheckBox Grid.Column="1" Content="Update" IsChecked="{Binding UpdateEnabled}" />
 
             <StackPanel Orientation="Horizontal" Grid.Column="3">

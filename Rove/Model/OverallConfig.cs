@@ -166,7 +166,6 @@ namespace Rove.Model
             IsKnownProcess = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.IsKnownProcess), serialized.IsKnownProcess);
             StartProcessScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.StartProcessScript), serialized.StartProcessScript, environments);
             Color = Converstions.GetColor(serialized.ProcessName, nameof(serialized.Color), serialized.Color);
-            AutoScroll = userSerialized != null ? userSerialized.AutoScroll : true;
         }
 
         public string ProcessName { get; } 
@@ -186,8 +185,6 @@ namespace Rove.Model
         public ScriptPath StartProcessScript { get; }
 
         public Color Color { get; }
-
-        public bool AutoScroll { get; set; }
     }
 
     public static class Converstions

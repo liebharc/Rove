@@ -247,7 +247,7 @@ namespace Rove.View
             }
 
             return model.Processes
-                .Select(p => new ProcessUserConfig { ProcessName = p.Title, AutoScroll = p.AutoScroll })
+                .Select(p => new ProcessUserConfig { ProcessName = p.Title })
                 .ToList();
         }
 

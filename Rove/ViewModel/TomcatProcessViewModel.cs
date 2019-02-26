@@ -137,22 +137,6 @@ namespace Rove.ViewModel
             }
         }
 
-        private bool _autoScroll = true;
-
-        public bool AutoScroll
-        {
-            get
-            {
-                return _autoScroll;
-            }
-
-            set
-            {
-                _autoScroll = value;
-                OnPropertyChanged(nameof(AutoScroll));
-            }
-        }
-
         private bool _updateEnabled = true;
 
         public bool UpdateEnabled
@@ -187,7 +171,6 @@ namespace Rove.ViewModel
                 throw new ArgumentNullException(nameof(processConfig));
             }
 
-            AutoScroll = processConfig.AutoScroll;
             CurrentEnvironment = currentEnvironment;
             StartProcess = new LambdaCommand(() => 
                 {
@@ -505,7 +488,7 @@ namespace Rove.ViewModel
                 }
             }
 
-            if (AutoScroll)
+            if (UpdateEnabled)
             {
                 LogViewer.GoEnd();
             }

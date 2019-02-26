@@ -22,6 +22,5 @@ namespace Rove.Model
     public class ProcessUserConfig
     {
         public string ProcessName { get; set; } = string.Empty;
-        public bool AutoScroll { get; set; } = true;
     }
 }
