@@ -46,12 +46,10 @@ namespace Rove.ViewModel
 
         private ProcessConfigChecked ProcessConfig { get; }
         public CurrentRoveEnvironment CurrentEnvironment { get; }
-        public bool IsStartCommandAvailable { get; }
+
         public ICommand Close { get; }
 
         public ICommand ShowHide { get; }
-
-        public ICommand StartProcess { get; }
 
         public ICommand OpenLogFile { get; }
 
@@ -174,15 +172,6 @@ namespace Rove.ViewModel
             }
 
             CurrentEnvironment = currentEnvironment;
-            StartProcess = new LambdaCommand(() => 
-                {
-                    if (processConfig != null)
-                    {
-                        ProcessUtils.Run(processConfig.StartProcessScript, CurrentEnvironment).Report();
-                    }
-                }
-            );
-            IsStartCommandAvailable = processConfig.StartProcessScript != null;
             Close = new LambdaCommand(() => Tomcat?.Kill());
             OpenLogFile = new LambdaCommand(() => 
                 {

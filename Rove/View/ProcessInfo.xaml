@@ -11,7 +11,6 @@
         <Grid DockPanel.Dock="Top" Background="{Binding Color}">
             <Grid.Resources>
                 <local:BooleanToVisibilityTextConverter x:Key="BooleanToVisibilityText" />
-                <local:ShowOnDisabledConverter x:Key="ShowOnDisabled"/>
             </Grid.Resources>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -22,15 +21,6 @@
             </Grid.ColumnDefinitions>
             <Button Command="{Binding ShowHide}" Content="{Binding IsVisible, Converter={StaticResource BooleanToVisibilityText}}" IsEnabled="{Binding Path=IsEnabled}"/>
             <Button Grid.Column="1" Command="{Binding OpenLogFile}" IsEnabled="{Binding Path=IsEnabled}">Open Log ...</Button>
-
-            <Button Grid.Column="3" Command="{Binding StartProcess}" Content="Start">
-                <Button.Visibility>
-                    <MultiBinding Converter="{StaticResource ShowOnDisabled}">
-                        <Binding Path="IsEnabled" />
-                        <Binding Path="IsStartCommandAvailable" />
-                    </MultiBinding>
-                </Button.Visibility>
-            </Button>
             <Button Grid.Column="4" Command="{Binding Close}" IsEnabled="{Binding Path=IsEnabled}">x</Button>
         </Grid>
         <Grid DockPanel.Dock="Bottom" IsEnabled="{Binding Path=IsEnabled}">

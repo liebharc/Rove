@@ -67,8 +67,7 @@ namespace Rove.Model
                     StartupMessage = ".*started.*",
                     OnProcessStartedScript = new Executable("OnProcessStartedScript.ps1"),
                     FindLogFileScript = new Executable("FindLogFileScript.ps1"),
-                    IsKnownProcess= ".*",
-                    StartProcessScript = new Executable("StartProcessScript.ps1")
+                    IsKnownProcess= ".*"
                 };
 
                 config.ProcessConfigs.Add(process);
@@ -144,8 +143,6 @@ namespace Rove.Model
 
         public string IsKnownProcess { get; set; } = string.Empty;
 
-        public Executable StartProcessScript { get; set; } = new Executable();
-
         public string StartupMessage { get; set; } = string.Empty;
 
         public string Color { get; set; } = string.Empty;
@@ -172,7 +169,6 @@ namespace Rove.Model
             OnProcessStartedScript = Converstions.GetOptionalPath(serialized.ProcessName, nameof(serialized.OnProcessStartedScript), serialized.OnProcessStartedScript, environments);
             FindLogFileScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.FindLogFileScript), serialized.FindLogFileScript, environments);
             IsKnownProcess = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.IsKnownProcess), serialized.IsKnownProcess);
-            StartProcessScript = Converstions.GetOptionalPath(serialized.ProcessName, nameof(serialized.StartProcessScript), serialized.StartProcessScript, environments);
             Color = Converstions.GetColor(serialized.ProcessName, nameof(serialized.Color), serialized.Color);
         }
 
@@ -189,8 +185,6 @@ namespace Rove.Model
         public ScriptPath FindLogFileScript { get; }
 
         public Regex IsKnownProcess { get; }
-
-        public ScriptPath StartProcessScript { get; }
 
         public Color Color { get; }
     }
