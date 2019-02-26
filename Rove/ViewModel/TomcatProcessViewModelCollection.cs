@@ -1,6 +1,7 @@
 ﻿using Rove.Model;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Rove.ViewModel
 {
@@ -34,10 +35,7 @@ namespace Rove.ViewModel
         internal void Update()
         {
             var tomcats = TomcatProcessInfo.NewRunningTomcatProcesses(SeenProcessList);
-            foreach (var process in Processes)
-            {
-                process.Update(tomcats);
-            }
+            Parallel.ForEach(Processes, p => p.Update(tomcats));
         }
     }
 }
