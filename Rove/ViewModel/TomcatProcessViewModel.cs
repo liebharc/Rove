@@ -36,6 +36,8 @@ namespace Rove.ViewModel
             }
         }
 
+        private BoundedExponentialPollingInterval SearchForLogFilePollingInterval { get; } = new BoundedExponentialPollingInterval();
+
         private TomcatProcessControl Tomcat { get; set; }
 
         private object TomcatLock { get; } = new object();
@@ -288,7 +290,7 @@ namespace Rove.ViewModel
             {
                 LogFile.RememberIdleCheck();
                 var logFile = DetermineLogFilePath();
-                if (File.Exists(logFile) && (LogFile== null || !new FileInfo(logFile).FullName.Equals(LogFile.File.FullName)))
+                if (!String.IsNullOrEmpty(logFile) && File.Exists(logFile) && (LogFile== null || !new FileInfo(logFile).FullName.Equals(LogFile.File.FullName)))
                 {
                     DisposeLogFile();
                     StartToReadLogFile(logFile, false);
@@ -331,6 +333,8 @@ namespace Rove.ViewModel
             {
                 DisposeLogFile();
             }
+
+            SearchForLogFilePollingInterval.Reset();
 
             if (Config.SetRoveEnvScript != null)
             {
@@ -397,6 +401,11 @@ namespace Rove.ViewModel
 
         private string DetermineLogFilePath()
         {
+            if (!SearchForLogFilePollingInterval.IsTimeForPolling())
+            {
+                return string.Empty;
+            }
+
             var logResult = Script.Run(ProcessConfig.FindLogFileScript, CurrentEnvironment, new[] { QuoteSingle(Tomcat.CommandLine) });
             if (logResult.Check().IsError)
             {

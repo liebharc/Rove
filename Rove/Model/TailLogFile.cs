@@ -8,7 +8,7 @@ namespace Rove.Model
 {
     public sealed class TailLogFile : IDisposable
     {
-        private LogIdleCheck IdleCheck { get; } = new LogIdleCheck();
+        private LinearPollingInterval IdleCheck { get; } = new LinearPollingInterval();
 
         private Thread Reader { get; set; }
 
@@ -33,7 +33,7 @@ namespace Rove.Model
 
         public bool IsIdle(TimeSpan duration)
         {
-            return IdleCheck.IsIdle(duration);
+            return IdleCheck.IsTimeForPolling(duration);
         }
 
         public void RememberIdleCheck()
