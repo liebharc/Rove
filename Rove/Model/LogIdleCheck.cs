@@ -18,6 +18,11 @@ namespace Rove.Model
 
         public bool IsIdle(TimeSpan duration)
         {
+            if (duration == TimeSpan.Zero)
+            {
+                return false;
+            }
+
             lock (_lock)
             {
                 return (DateTime.Now - lastUpdate) > duration;

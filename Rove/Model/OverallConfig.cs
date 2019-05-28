@@ -145,6 +145,8 @@ namespace Rove.Model
 
         public string Color { get; set; } = string.Empty;
 
+        public double LogFileIdleRecheckDuration { get; set; } = 0;
+
         public ProcessConfigChecked ToProcessConfig(ProcessUserConfig userSerialized)
         {
             return new ProcessConfigChecked(this, userSerialized);
@@ -168,6 +170,7 @@ namespace Rove.Model
             FindLogFileScript = Converstions.GetMandatoryPath(serialized.ProcessName, nameof(serialized.FindLogFileScript), serialized.FindLogFileScript);
             IsKnownProcess = Converstions.CompileRegex(serialized.ProcessName, nameof(serialized.IsKnownProcess), serialized.IsKnownProcess);
             Color = Converstions.GetColor(serialized.ProcessName, nameof(serialized.Color), serialized.Color);
+            LogFileIdleRecheckDuration = TimeSpan.FromSeconds(serialized.LogFileIdleRecheckDuration);
         }
 
         public string ProcessName { get; } 
@@ -185,6 +188,8 @@ namespace Rove.Model
         public Regex IsKnownProcess { get; }
 
         public Color Color { get; }
+
+        public TimeSpan LogFileIdleRecheckDuration { get; }
     }
 
     public static class Converstions

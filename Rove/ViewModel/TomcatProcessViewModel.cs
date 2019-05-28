@@ -157,7 +157,7 @@ namespace Rove.ViewModel
             }
         }
 
-        public TimeSpan LogFileIdleRecheckDuration { get; } = TimeSpan.FromSeconds(60);
+        public TimeSpan LogFileIdleRecheckDuration { get; }
 
         public TomcatProcessViewModel(OverallConfigChecked config, ProcessConfigChecked processConfig, CurrentRoveEnvironment currentEnvironment)
         {
@@ -172,6 +172,7 @@ namespace Rove.ViewModel
             }
 
             CurrentEnvironment = currentEnvironment;
+            LogFileIdleRecheckDuration = processConfig.LogFileIdleRecheckDuration;
             Close = new LambdaCommand(() => Tomcat?.Kill());
             OpenLogFile = new LambdaCommand(() => 
                 {
