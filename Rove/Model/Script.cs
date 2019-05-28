@@ -100,6 +100,8 @@ namespace Rove.Model
 
         public static ScriptResult Run(FileInfo script, DirectoryInfo workingDir, IEnumerable<string> arguments = null, IDictionary<string, string> environment = null)
         {
+            Logger.WriteInfo("Running command: " + script.FullName);
+
             if (script.Extension == ".ps1")
             {
                 return RunPowerShell(script, workingDir, arguments, environment);
