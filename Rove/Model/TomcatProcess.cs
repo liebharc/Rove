@@ -46,7 +46,15 @@ namespace Rove.Model
 
         public TomcatProcessControl Control()
         {
-            return new TomcatProcessControl(Process, CommandLine);
+            try
+            {
+                return new TomcatProcessControl(Process, CommandLine);
+            }
+            catch (Exception ex)
+            {
+                Logger.WriteInfo("Failed to get control of " + Process + ": " + ex.Message);
+                return null;
+            }
         }
     }
 
